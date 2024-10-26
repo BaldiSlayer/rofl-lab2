@@ -14,6 +14,7 @@ type wall struct {
 	y2 int
 }
 
+// TODO заменить на хранение информации в битах числа, сейчас мне лень
 type lightWallCell struct {
 	leftState  bool
 	rightState bool
@@ -37,11 +38,11 @@ func (c *lightWallCell) down() bool {
 	return c.downState
 }
 
-type LightWalls struct {
+type ThinWalledMaze struct {
 	maze [][]lightWallCell
 }
 
-func (w *LightWalls) Print() {
+func (w *ThinWalledMaze) Print() {
 	for _, layer := range w.maze {
 		rowStr := ""
 
@@ -69,13 +70,32 @@ func (w *LightWalls) Print() {
 	}
 }
 
+func (w *ThinWalledMaze) makeVerticalWall(x1, y1, x2, y2 int) {
+	w.maze[y1][x1].downState = true
+	w.maze[y2][x2].upState = true
+}
+
+func (w *ThinWalledMaze) makeHorizontalWall(x1, y1, x2, y2 int) {
+	w.maze[y1][x1].rightState = true
+	w.maze[y2][x2].leftState = true
+}
+
 type LightWallsGenerator struct{}
 
 func NewLightWallsGenerator() *LightWallsGenerator {
 	return &LightWallsGenerator{}
 }
 
-func (l *LightWallsGenerator) Generate(width, height int) (*LightWalls, error) {
+func (l *LightWallsGenerator) Generate(width, height int) (*ThinWalledMaze, error) {
+	mazeField := make([][]lightWallCell, height)
+	for i := 0; i < width; i++ {
+		mazeField[i] = make([]lightWallCell, width)
+	}
+
+	generatedMaze := ThinWalledMaze{
+		maze: mazeField,
+	}
+
 	walls := make([]wall, 0)
 
 	for x := 0; x < width; x++ {
@@ -110,11 +130,6 @@ func (l *LightWallsGenerator) Generate(width, height int) (*LightWalls, error) {
 	// TODO return error if > int max
 	disDU := dsu.New(width * height)
 
-	maze := make([][]lightWallCell, height)
-	for i := 0; i < width; i++ {
-		maze[i] = make([]lightWallCell, width)
-	}
-
 	for _, wallInst := range walls {
 		cell1 := wallInst.y1*width + wallInst.x1
 		cell2 := wallInst.y2*width + wallInst.x2
@@ -124,20 +139,26 @@ func (l *LightWallsGenerator) Generate(width, height int) (*LightWalls, error) {
 
 			if wallInst.x1 == wallInst.x2 {
 				if wallInst.y1 < wallInst.y2 {
-					maze[wallInst.y1][wallInst.x1].downState = true
-					maze[wallInst.y2][wallInst.x2].upState = true
+					generatedMaze.makeVerticalWall(
+						wallInst.x1,
+						wallInst.y1,
+						wallInst.x2,
+						wallInst.y2,
+					)
 				}
-
-				if wallInst.y1 < wallInst.y2 {
-					maze[wallInst.y1][wallInst.x1].rightState = true
-					maze[wallInst.y2][wallInst.x2].leftState = true
+			} else {
+				if wallInst.x1 < wallInst.x2 {
+					generatedMaze.makeHorizontalWall(
+						wallInst.x1,
+						wallInst.y1,
+						wallInst.x2,
+						wallInst.y2,
+					)
 				}
 			}
 		}
 
 	}
 
-	return &LightWalls{
-		maze: maze,
-	}, nil
+	return &generatedMaze, nil
 }
