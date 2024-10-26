@@ -1,7 +1,6 @@
 module Printer where
 
 import Models 
-import Data.Map (Map, elems)
 
 {-
         | epsilon 
@@ -36,8 +35,8 @@ checkEpsilon str | str == "" = "epsilon"
                  | otherwise = str
 
 {-Выводит саму таблицу-}
-printLines :: Map [Bool] String -> String
-printLines a = printLinesList $ mapToList a
+printLines :: [([Bool], String)] -> String
+printLines a = printLinesList a
     where
         printLinesList [] = ""
         printLinesList ((key, str):xs) = (checkEpsilon str) ++"|"++ ({-boolToNumStr (last key)-}toString $ reverse key) ++ "\n" ++ (printLinesList xs)

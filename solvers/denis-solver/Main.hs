@@ -2,27 +2,32 @@ module Main where
 
 import Printer
 import Solver
+import Models
 {-
 Главный исполняемый файл солвера. Он компилится с помощью команды `ghc solver.hs`. После он должен вызываться с помощью файла executer.py
 Этот файл организует интерфейс, позволяющий итеративно проводить вычисление классов эквивалентности
 -}
 
-{-loop :: Automat -> IO ()
-loop automat = do
-    ans <- getLine
-    if ans == "TRUE"
-        then return
-        else else_branch
-    where
-        else_branch = do
-            newautomat <- addStrToAutomat automat ans
-            putStrLn $ generateStringOfTable newautomat
-            loop newautomat
--}
+checkAutomat :: Automat -> IO(Bool, String)
+checkAutomat a = do
+    putStrLn $ generateStringOfTable a
+    str <- getLine
+    if str == "TRUE"
+        then return (True, "")
+        else return (False, str)
 
+
+loop :: Automat -> IO()
+loop a = do
+    (res, contr) <- checkAutomat a
+    if res 
+        then putStrLn "Succes"
+        else do
+            newauto <- addStringToAutomat a contr
+            loop newauto    
 
 main :: IO()
 main = do
-    str <- getLine
-    automat <- generateAutomat str
-    putStrLn $ generateStringOfTable automat
+    auto <- generateAutomat ""
+    loop auto
+
