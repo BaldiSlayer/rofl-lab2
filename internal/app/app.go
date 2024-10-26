@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mat"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
+	"log/slog"
 	"os"
 	"strings"
 )
@@ -27,7 +28,7 @@ func NewLab2(width, height int) *Lab2 {
 
 type Handler struct {
 	Checker func(s string) bool
-	Action  func(s string)
+	Action  func(s string) error
 }
 
 func (lab2 *Lab2) addCliHandlers() []Handler {
@@ -35,11 +36,13 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Checker: func(s string) bool {
 			return s == "g"
 		},
-		Action: func(s string) {
+		Action: func(s string) error {
 			err := lab2.teacher.Generate()
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
+
+			return nil
 		},
 	}
 
@@ -47,15 +50,17 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Checker: func(s string) bool {
 			return s == "p"
 		},
-		Action: func(s string) {
+		Action: func(s string) error {
 			maze, err := lab2.teacher.Print()
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 
 			for _, line := range maze {
 				fmt.Println(line)
 			}
+
+			return nil
 		},
 	}
 
@@ -63,8 +68,15 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Checker: func(s string) bool {
 			return strings.HasPrefix(s, "i ")
 		},
-		Action: func(s string) {
-			fmt.Println(lab2.teacher.Include(s[2:]))
+		Action: func(s string) error {
+			res, err := lab2.teacher.Include(s[2:])
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(res)
+
+			return nil
 		},
 	}
 
@@ -72,10 +84,17 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Checker: func(s string) bool {
 			return strings.HasPrefix(s, "e ")
 		},
-		Action: func(s string) {
+		Action: func(s string) error {
 			_ = s[2:]
 
-			fmt.Println(lab2.teacher.Equal())
+			res, err := lab2.teacher.Equal()
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(res)
+
+			return nil
 		},
 	}
 
@@ -98,7 +117,10 @@ func (lab2 *Lab2) cli() {
 
 			for _, cmd := range commands {
 				if cmd.Checker(command) {
-					cmd.Action(command)
+					err := cmd.Action(command)
+					if err != nil {
+						slog.Error("error while do action", "error", err)
+					}
 				}
 			}
 		}
@@ -115,5 +137,6 @@ func (lab2 *Lab2) httpServer() {
 }
 
 func (lab2 *Lab2) Run() {
+	// TODO это нужно выбирать в зависимости от значения флага
 	lab2.cli()
 }
