@@ -42,27 +42,32 @@ func (r *Realization) Include(query string) (bool, error) {
 }
 
 type reachableResponse struct {
-	allReachable  bool
-	notReachableX int
-	notReachableY int
+	allReachable     bool
+	notReachableCell models.Cell
 }
 
 // allCellsAreReachable проверяет, чтобы все клетки лабиринта были достижимы
 func (r *Realization) allCellsAreReachable(prefixes []string) (reachableResponse, error) {
-	reachableCells := make(map[int]struct{})
+	// храним информацию о клетках, в которые мы смогли прийти
+	reachableCells := make(map[models.Cell]struct{})
 
 	for _, prefix := range prefixes {
 		i, j := r.walk(prefix)
-		reachableCells[i*r.width+j] = struct{}{}
+		cell := models.Cell{X: j, Y: i}
+
+		reachableCells[cell] = struct{}{}
 	}
 
-	for i := 0; i < r.width*r.height; i++ {
-		if _, ok := reachableCells[i]; !ok {
-			return reachableResponse{
-				allReachable:  false,
-				notReachableX: i % r.width,
-				notReachableY: i / r.width,
-			}, nil
+	for y := 0; y < r.height; y++ {
+		for x := 0; x < r.width; x++ {
+			cell := models.Cell{X: x, Y: y}
+
+			if _, ok := reachableCells[cell]; !ok {
+				return reachableResponse{
+					allReachable:     false,
+					notReachableCell: cell,
+				}, nil
+			}
 		}
 	}
 
