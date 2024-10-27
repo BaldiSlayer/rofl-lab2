@@ -19,7 +19,7 @@ type Lab2 struct {
 func NewLab2(width, height int) *Lab2 {
 	return &Lab2{
 		teacher: mat.NewRealization(
-			mazegen.NewSimpleGenerator(),
+			mazegen.NewLightWallsGenerator(),
 			width,
 			height,
 		),
@@ -127,6 +127,7 @@ func (lab2 *Lab2) cli() {
 
 		if err := scanner.Err(); err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
+
 			break
 		}
 	}

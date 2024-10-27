@@ -42,6 +42,42 @@ type ThinWalledMaze struct {
 	maze [][]lightWallCell
 }
 
+func (w *ThinWalledMaze) GetPosAfterStep(i, j int, a byte) (int, int) {
+	if w.IsOut(i, j) {
+		// проверка "запустит ли меня соседняя клетка"
+
+	}
+
+	switch a {
+	case 'N':
+		if w.maze[i][j].up() {
+			return i - 1, j
+		}
+		return i, j
+	case 'S':
+		if w.maze[i][j].down() {
+			return i + 1, j
+		}
+		return i, j
+	case 'W':
+		if w.maze[i][j].left() {
+			return i, j - 1
+		}
+		return i, j
+	case 'E':
+		if w.maze[i][j].right() {
+			return i, j + 1
+		}
+		return i, j
+	}
+
+	return i, j
+}
+
+func (w *ThinWalledMaze) IsOut(i, j int) bool {
+	return i < 0 || i >= len(w.maze) || j < 0 || j >= len(w.maze[0])
+}
+
 func (w *ThinWalledMaze) Print() {
 	for _, layer := range w.maze {
 		rowStr := ""
@@ -157,8 +193,31 @@ func (l *LightWallsGenerator) Generate(width, height int) (*ThinWalledMaze, erro
 				}
 			}
 		}
-
 	}
 
+	generatedMaze.makeExit(0, rand.Intn(width))
+	generatedMaze.makeExit(height-1, rand.Intn(width))
+
+	generatedMaze.makeExit(rand.Intn(height), 0)
+	generatedMaze.makeExit(rand.Intn(height), width-1)
+
 	return &generatedMaze, nil
+}
+
+func (w *ThinWalledMaze) makeExit(row, col int) {
+	if row == 0 {
+		w.maze[row][col].upState = true
+	}
+
+	if row == len(w.maze)-1 {
+		w.maze[row][col].downState = true
+	}
+
+	if col == 0 {
+		w.maze[row][col].leftState = true
+	}
+
+	if col == len(w.maze[0])-1 {
+		w.maze[row][col].rightState = true
+	}
 }
