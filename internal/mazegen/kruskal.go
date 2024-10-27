@@ -42,31 +42,75 @@ type ThinWalledMaze struct {
 	maze [][]lightWallCell
 }
 
-func (w *ThinWalledMaze) GetPosAfterStep(i, j int, a byte) (int, int) {
-	if w.IsOut(i, j) {
-		// проверка "запустит ли меня соседняя клетка"
+func (w *ThinWalledMaze) getDest(i, j int, a byte) (int, int) {
+	switch a {
+	case 'N':
+		return i - 1, j
+	case 'S':
+		return i + 1, j
+	case 'W':
+		return i, j - 1
+	case 'E':
+		return i, j + 1
+	}
 
+	return i, j
+}
+
+// TODO refactor
+func (w *ThinWalledMaze) GetPosAfterStep(i, j int, a byte) (int, int) {
+	destI, destJ := w.getDest(i, j, a)
+
+	// не хочу получать fatalpanic
+	if w.IsOut(i, j) {
+		if w.IsOut(destI, destJ) {
+			return destI, destJ
+		}
+
+		// проверка "запустит ли" меня клетка лабиринта
+		switch a {
+		case 'N':
+			if w.maze[destI][destJ].down() {
+				return destI, destJ
+			}
+			return i, j
+		case 'S':
+			if w.maze[destI][destJ].up() {
+				return destI, destJ
+			}
+			return i, j
+		case 'W':
+			if w.maze[destI][destJ].right() {
+				return destI, destJ
+			}
+			return i, j
+		case 'E':
+			if w.maze[destI][destJ].left() {
+				return destI, destJ
+			}
+			return i, j
+		}
 	}
 
 	switch a {
 	case 'N':
 		if w.maze[i][j].up() {
-			return i - 1, j
+			return destI, destJ
 		}
 		return i, j
 	case 'S':
 		if w.maze[i][j].down() {
-			return i + 1, j
+			return destI, destJ
 		}
 		return i, j
 	case 'W':
 		if w.maze[i][j].left() {
-			return i, j - 1
+			return destI, destJ
 		}
 		return i, j
 	case 'E':
 		if w.maze[i][j].right() {
-			return i, j + 1
+			return destI, destJ
 		}
 		return i, j
 	}
