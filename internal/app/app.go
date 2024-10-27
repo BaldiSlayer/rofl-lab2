@@ -74,7 +74,13 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 				return err
 			}
 
-			fmt.Println(res)
+			if res {
+				fmt.Println(1)
+
+				return nil
+			}
+
+			fmt.Println(0)
 
 			return nil
 		},
@@ -87,7 +93,7 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Action: func(s string) error {
 			_ = s[2:]
 
-			res, err := lab2.teacher.Equal()
+			res, err := lab2.teacher.Equal(nil, nil, nil)
 			if err != nil {
 				return err
 			}

@@ -8,7 +8,7 @@ type MAT interface {
 	// Include - запрос на включение
 	Include(query string) (bool, error)
 	// Equal - запрос на эквивалентность
-	Equal() (models.EqualResponse, error)
+	Equal(prefixes []string, suffixes []string, matrix [][]bool) (models.EqualResponse, error)
 	// Print - визуализация лабиринта
 	Print() ([]string, error)
 }

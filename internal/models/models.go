@@ -1,6 +1,10 @@
 package models
 
+type CounterExample struct {
+	CounterExample string
+}
+
 type EqualResponse struct {
-	Equal        bool
-	ContrExample string
+	Equal          bool
+	CounterExample CounterExample
 }
