@@ -23,6 +23,7 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 		Maze: mazeField,
 	}
 
+	// TODO можно предвыделить, мне сейчас лень умножать
 	walls := make([]maze.Wall, 0)
 
 	for x := 0; x < width; x++ {
@@ -54,7 +55,8 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 		walls[i], walls[j] = walls[j], walls[i]
 	})
 
-	// TODO return error if > int max
+	// TODO return error if > int max, а это точно случится?
+	// кажется в этом случае я даже не смогу хранить лабиринт (не хватит памяти)
 	disDU := dsu.New(width * height)
 
 	for _, wallInst := range walls {
@@ -66,7 +68,7 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 
 			if wallInst.X1 == wallInst.X2 {
 				if wallInst.Y1 < wallInst.Y2 {
-					generatedMaze.MakeVerticalWall(
+					generatedMaze.DeleteVerticalWall(
 						wallInst.X1,
 						wallInst.Y1,
 						wallInst.X2,
@@ -75,7 +77,7 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 				}
 			} else {
 				if wallInst.X1 < wallInst.X2 {
-					generatedMaze.MakeVerticalWall(
+					generatedMaze.DeleteHorizontalWall(
 						wallInst.X1,
 						wallInst.Y1,
 						wallInst.X2,

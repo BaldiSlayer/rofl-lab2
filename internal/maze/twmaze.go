@@ -14,6 +14,7 @@ type Wall struct {
 }
 
 // TODO заменить на хранение информации в битах числа, сейчас мне лень
+// true - можно пройти
 type LightWallCell struct {
 	leftState  bool
 	rightState bool
@@ -21,22 +22,22 @@ type LightWallCell struct {
 	downState  bool
 }
 
-// left проверяет есть ли стена слева
+// left
 func (c *LightWallCell) left() bool {
 	return c.leftState
 }
 
-// right проверяет есть ли стена справа
+// right
 func (c *LightWallCell) right() bool {
 	return c.rightState
 }
 
-// up проверяет есть ли стена сверху
+// up
 func (c *LightWallCell) up() bool {
 	return c.upState
 }
 
-// down проверяет есть ли стена снизу
+// down
 func (c *LightWallCell) down() bool {
 	return c.downState
 }
@@ -153,12 +154,12 @@ func (w *ThinWalled) Print() {
 	}
 }
 
-func (w *ThinWalled) MakeVerticalWall(x1, y1, x2, y2 int) {
+func (w *ThinWalled) DeleteVerticalWall(x1, y1, x2, y2 int) {
 	w.Maze[y1][x1].downState = true
 	w.Maze[y2][x2].upState = true
 }
 
-func (w *ThinWalled) MakeHorizontalWall(x1, y1, x2, y2 int) {
+func (w *ThinWalled) DeleteHorizontalWall(x1, y1, x2, y2 int) {
 	w.Maze[y1][x1].rightState = true
 	w.Maze[y2][x2].leftState = true
 }
@@ -168,33 +169,37 @@ func (w *ThinWalled) cellCordsToInt(x, y int) int {
 }
 
 // isWallInWay проверяет, будет ли стена на пути (если да, то мы не можем пойти)
-func (w *ThinWalled) isWallInWay(dest models.Cell, actionNumber int) bool {
-	// если клетка вне - париться не надо, нам никто не мешает
-	if w.IsOut(dest.Y, dest.X) {
+func (w *ThinWalled) isWallInWay(src, dest models.Cell, actionNumber int) bool {
+	// если обе клетки вне - нам ничто не мешает
+	if w.IsOut(src.Y, src.X) && w.IsOut(dest.Y, dest.X) {
 		return false
 	}
 
-	// логика такова:
-	// если мы хотим пойти наверх, то нам нужно посмотреть, есть ли у верхней клетки стена снизу
-	// если вниз, посмотреть, есть ли у нижней клетки стена сверху и т.д.
-	// я делаю проверку только по клетке, в которую перехожу, так как стены в лабиринте двусторонние
-	// и можно обойтись одной проверкой, так как мы можем быть изначально вне лабиринта и пытаться в него зайти
-	isWallDirs := [...]func() bool{
-		w.Maze[dest.Y][dest.X].down,
-		w.Maze[dest.Y][dest.X].up,
-		w.Maze[dest.Y][dest.X].right,
-		w.Maze[dest.Y][dest.X].left,
+	if w.IsOut(src.Y, src.X) {
+		isWallDirs := [...]func() bool{
+			w.Maze[dest.Y][dest.X].down,
+			w.Maze[dest.Y][dest.X].up,
+			w.Maze[dest.Y][dest.X].right,
+			w.Maze[dest.Y][dest.X].left,
+		}
+
+		return !isWallDirs[actionNumber]()
 	}
 
-	return isWallDirs[actionNumber]()
+	isWallDirs := [...]func() bool{
+		w.Maze[src.Y][src.X].up,
+		w.Maze[src.Y][src.X].down,
+		w.Maze[src.Y][src.X].left,
+		w.Maze[src.Y][src.X].right,
+	}
+
+	return !isWallDirs[actionNumber]()
 }
 
 // GetPath находит путь от start до end
 func (w *ThinWalled) GetPath(start, end models.Cell) string {
-	// height, width := len(w.Maze), len(w.Maze[0])
-
-	// up, down, left, right
-	directions := []models.Cell{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+	// up, down, left, right, это важно, иначе сломается isWallInWay
+	directions := []models.Cell{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 
 	queue := list.New()
 	queue.PushBack(start)
@@ -202,14 +207,18 @@ func (w *ThinWalled) GetPath(start, end models.Cell) string {
 	visited := make(map[models.Cell]struct{})
 	visited[start] = struct{}{}
 
-	prevs := make(map[models.Cell]models.Cell)
+	prev := make(map[models.Cell]models.Cell)
 
 	// делаем вид, что тут пришли сами в себя
-	prevs[start] = start
+	prev[start] = start
 
 	for queue.Len() > 0 {
 		current := queue.Front().Value.(models.Cell)
 		queue.Remove(queue.Front())
+
+		if current == end {
+			break
+		}
 
 		for number, dir := range directions {
 			next := models.Cell{
@@ -217,15 +226,67 @@ func (w *ThinWalled) GetPath(start, end models.Cell) string {
 				Y: current.Y + dir.Y,
 			}
 
-			// мы должны уметь ходить в эту клетку
-			if w.isWallInWay(next, number) {
+			_, vis := visited[next]
 
+			if !w.isWallInWay(current, next, number) && !vis {
+				visited[next] = struct{}{}
+
+				queue.PushBack(next)
+				prev[next] = current
 			}
 		}
 	}
 
 	// восстановление пути
 	path := ""
+
+	cur := end
+	for cur != start {
+		parent := prev[cur]
+
+		step := models.Cell{
+			X: cur.X - parent.X,
+			Y: cur.Y - parent.Y,
+		}
+
+		down := models.Cell{
+			X: 0,
+			Y: 1,
+		}
+
+		up := models.Cell{
+			X: 0,
+			Y: -1,
+		}
+
+		left := models.Cell{
+			X: -1,
+			Y: 0,
+		}
+
+		right := models.Cell{
+			X: 1,
+			Y: 0,
+		}
+
+		if step == down {
+			path = "S" + path
+		}
+
+		if step == up {
+			path = "N" + path
+		}
+
+		if step == left {
+			path = "W" + path
+		}
+
+		if step == right {
+			path = "E" + path
+		}
+
+		cur = parent
+	}
 
 	return path
 }

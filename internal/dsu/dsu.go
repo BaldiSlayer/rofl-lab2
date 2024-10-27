@@ -9,10 +9,10 @@ type DSU struct {
 func New(n int) *DSU {
 	parent := make([]int, n)
 	for i := range parent {
-		parent[i] = i
+		parent[i] = i // Каждому элементу назначается сам себя как родитель
 	}
 
-	rank := make([]int, n)
+	rank := make([]int, n) // Инициализация рангов
 
 	return &DSU{
 		parent: parent,
@@ -33,19 +33,14 @@ func (d *DSU) Union(a int, b int) {
 	rootB := d.Find(b)
 
 	if rootA != rootB {
+		// Объединение по рангу
 		if d.rank[rootA] > d.rank[rootB] {
 			d.parent[rootB] = rootA
-
-			return
-		}
-
-		if d.rank[rootA] < d.rank[rootB] {
+		} else if d.rank[rootA] < d.rank[rootB] {
 			d.parent[rootA] = rootB
-
-			return
+		} else {
+			d.parent[rootB] = rootA
+			d.rank[rootA] += 1
 		}
-
-		d.parent[rootB] = rootA
-		d.rank[rootA] += 1
 	}
 }

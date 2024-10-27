@@ -38,6 +38,13 @@ func (r *Realization) walk(query string) (int, int) {
 
 // Include осуществляет проверку запроса на вхождение
 func (r *Realization) Include(query string) (bool, error) {
+	path := r.maze.GetPath(
+		models.Cell{X: 0, Y: 0},
+		models.Cell{X: 1, Y: 1},
+	)
+
+	_ = path
+
 	return r.maze.IsOut(r.walk(query)), nil
 }
 
