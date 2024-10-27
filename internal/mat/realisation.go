@@ -3,6 +3,7 @@ package mat
 import (
 	"errors"
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"github.com/BaldiSlayer/rofl-lab2/internal/models"
@@ -13,7 +14,7 @@ type Realization struct {
 	height int
 
 	mazeGenerator *mazegen.LightWallsGenerator
-	maze          *mazegen.ThinWalledMaze
+	maze          *maze.ThinWalled
 }
 
 func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Realization {
@@ -78,8 +79,6 @@ func (r *Realization) Equal(prefixes []string, suffixes []string, matrix [][]boo
 	}
 
 	if !allReachableResult.allReachable {
-		// тут нужно отправить в ответ контрпример
-
 		// теперь нужно найти путь от непосещенной клетки до старта и от нее же до выхода
 		// сконкатенировать два этих пути, это и будет контрпримером
 

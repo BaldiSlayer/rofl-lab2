@@ -13,24 +13,31 @@ type Cell struct {
 	X, Y int
 }
 
-var directions = []Cell{
-	{X: -1, Y: 0},
-	{X: 1, Y: 0},
-	{X: 0, Y: -1},
-	{X: 0, Y: 1},
-}
-
 func isInBounds(x, y, width, height int) bool {
 	return x >= 0 && y >= 0 && x < width && y < height
 }
 
 func shuffleDirections() {
+	var directions = []Cell{
+		{X: -1, Y: 0},
+		{X: 1, Y: 0},
+		{X: 0, Y: -1},
+		{X: 0, Y: 1},
+	}
+
 	rand.Shuffle(len(directions), func(i, j int) {
 		directions[i], directions[j] = directions[j], directions[i]
 	})
 }
 
 func generateMaze(grid [][]bool, x, y, height, width int) {
+	var directions = []Cell{
+		{X: -1, Y: 0},
+		{X: 1, Y: 0},
+		{X: 0, Y: -1},
+		{X: 0, Y: 1},
+	}
+
 	grid[x][y] = true
 	shuffleDirections()
 
