@@ -3,6 +3,7 @@ package maze
 import (
 	"container/list"
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/internal/models"
 )
 
 type Wall struct {
@@ -20,18 +21,22 @@ type LightWallCell struct {
 	downState  bool
 }
 
+// left проверяет есть ли стена слева
 func (c *LightWallCell) left() bool {
 	return c.leftState
 }
 
+// right проверяет есть ли стена справа
 func (c *LightWallCell) right() bool {
 	return c.rightState
 }
 
+// up проверяет есть ли стена сверху
 func (c *LightWallCell) up() bool {
 	return c.upState
 }
 
+// down проверяет есть ли стена снизу
 func (c *LightWallCell) down() bool {
 	return c.downState
 }
@@ -162,61 +167,58 @@ func (w *ThinWalled) cellCordsToInt(x, y int) int {
 	return y*len(w.Maze[0]) + x
 }
 
-func (w *ThinWalled) intToCellCords(x int) (int, int) {
-	return x / len(w.Maze[0]), x % len(w.Maze[0])
-}
-
 // isWallInWay проверяет, будет ли стена на пути (если да, то мы не можем пойти)
-func (w *ThinWalled) isWallInWay(cell, number int) bool {
-	i, j := w.intToCellCords(cell)
-
-	switch number {
-	case 0:
-		if !w.Maze[i][j].down() {
-			return false
-		}
-	case 1:
-		if !w.Maze[i][j].up() {
-			return false
-		}
-	case 2:
-		if !w.Maze[i][j].right() {
-			return false
-		}
-	case 3:
-		if !w.Maze[i][j].left() {
-			return false
-		}
+func (w *ThinWalled) isWallInWay(dest models.Cell, actionNumber int) bool {
+	// если клетка вне - париться не надо, нам никто не мешает
+	if w.IsOut(dest.Y, dest.X) {
+		return false
 	}
 
-	return true
+	// логика такова:
+	// если мы хотим пойти наверх, то нам нужно посмотреть, есть ли у верхней клетки стена снизу
+	// если вниз, посмотреть, есть ли у нижней клетки стена сверху и т.д.
+	// я делаю проверку только по клетке, в которую перехожу, так как стены в лабиринте двусторонние
+	// и можно обойтись одной проверкой, так как мы можем быть изначально вне лабиринта и пытаться в него зайти
+	isWallDirs := [...]func() bool{
+		w.Maze[dest.Y][dest.X].down,
+		w.Maze[dest.Y][dest.X].up,
+		w.Maze[dest.Y][dest.X].right,
+		w.Maze[dest.Y][dest.X].left,
+	}
+
+	return isWallDirs[actionNumber]()
 }
 
-func (w *ThinWalled) GetPath(start, end int) string {
-	height, width := len(w.Maze), len(w.Maze[0])
+// GetPath находит путь от start до end
+func (w *ThinWalled) GetPath(start, end models.Cell) string {
+	// height, width := len(w.Maze), len(w.Maze[0])
 
 	// up, down, left, right
-	directions := []int{-width, width, -1, 1}
+	directions := []models.Cell{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
 
 	queue := list.New()
-
 	queue.PushBack(start)
 
-	prevs := make([]int, height*width)
-	for i := 0; i < height*width; i++ {
-		prevs[i] = -1
-	}
+	visited := make(map[models.Cell]struct{})
+	visited[start] = struct{}{}
+
+	prevs := make(map[models.Cell]models.Cell)
 
 	// делаем вид, что тут пришли сами в себя
 	prevs[start] = start
 
 	for queue.Len() > 0 {
-		current := queue.Front().Value.(int)
+		current := queue.Front().Value.(models.Cell)
 		queue.Remove(queue.Front())
 
 		for number, dir := range directions {
+			next := models.Cell{
+				X: current.X + dir.X,
+				Y: current.Y + dir.Y,
+			}
+
 			// мы должны уметь ходить в эту клетку
-			if w.isWallInWay(current+dir, number) {
+			if w.isWallInWay(next, number) {
 
 			}
 		}
