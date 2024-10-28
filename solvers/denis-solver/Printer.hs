@@ -39,7 +39,7 @@ printLines :: [([Bool], String)] -> String
 printLines a = printLinesList a
     where
         printLinesList [] = ""
-        printLinesList ((key, str):xs) = (checkEpsilon str) ++"|"++ ({-boolToNumStr (last key)-}toString $ reverse key) ++ "\n" ++ (printLinesList xs)
+        printLinesList ((key, str):xs) = (checkEpsilon str) ++"|"++ ({-boolToNumStr (last key)-}toString key) ++ "\n" ++ (printLinesList xs)
         boolToNumStr x | x = "1"
                     | otherwise = "0"
         toString [] = ""

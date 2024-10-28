@@ -31,3 +31,8 @@ main = do
     auto <- generateAutomat ""
     loop auto
 
+check :: IO()
+check = do
+    auto <- generateAutomat ""
+    putStrLn $ generateStringOfTable auto
+

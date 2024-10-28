@@ -10,11 +10,17 @@ keys = map fst
 elems :: (Ord k) => [(k,a)] -> [a]
 elems = map snd
 
+lookupMap :: (Ord k) => [(k,a)] -> k -> Maybe a
+lookupMap [] k = Nothing
+lookupMap ((x,y):xs) k | k == x = Just y
+                    | k < x = Nothing
+                    | otherwise = lookupMap xs k
+
 insert :: (Ord k) => (k,a) -> [(k,a)] -> [(k,a)]
 insert x [] = [x]
 insert (k, e) ((d,f):xs) | k > d  = (d,f) : (insert (k,e) xs)
-                                | k == d = ((d,f):xs)
-                                | otherwise = (k,e): (d,f):xs
+                         | k == d = ((d,f):xs)
+                         | otherwise = (k,e):(d,f):xs
 
 insertList :: (Ord k) => [(k,a)] -> [(k,a)] -> [(k,a)]
 insertList [] xs = xs
@@ -27,12 +33,15 @@ unqPairList arr = arr `insertList` []
 
 data Automat = Automat{
     prefixesAndColumns :: [([Bool], String)],
-    suffixes :: [String]
+    suffixes :: [String],
+    knownResults :: [(String, Bool)]
 }
 
-newAutomat :: [([Bool], String)] -> [String] -> Automat
-newAutomat m l = Automat m l
+newAutomat :: [([Bool], String)] -> [String] -> [(String, Bool)]-> Automat
+newAutomat m l y = Automat m l y
 
+emptyAutomat :: Automat
+emptyAutomat = Automat [] [] []
 --------------------------------------------------------------------------------
 
 -- Конкатенация списков с обеспечением уникальности элементов(второй список должен быть гарантировано отсортирован)
@@ -55,7 +64,7 @@ generatePrefixes arr = let
                             pref p (x:xs) = p `unqAppend` (pref (p++[x]) xs)
                        in pref [] arr 
 
-{-Генерирует список всех суффиксов, начиная с пустого. Результат отсортирован по длине-}
+{-Генерирует список всех суффиксов, начиная с пустого. Результат отсортирован -}
 generateSuffixes :: String -> [String]
 generateSuffixes str = reverse (genSuf str) where
     genSuf [] = [""]
