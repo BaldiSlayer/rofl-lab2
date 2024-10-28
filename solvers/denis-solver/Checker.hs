@@ -30,7 +30,7 @@ isInLanguageCheck auto str = let
             else do
                 res <- isInLanguage str
                 newcheck <- return $ insert (str, res) (knownResults auto)
-                return ((newAutomat (prefixesAndColumns auto) (suffixes auto) newcheck ), res) 
+                return ((Automat (prefixesAndColumns auto) (suffixes auto) newcheck (mazeSize auto)), res) 
 
 listisInLanguageCheck :: Automat -> [String] ->  String -> IO (Automat, [Bool])
 listisInLanguageCheck auto [] _ = do return (auto, [])

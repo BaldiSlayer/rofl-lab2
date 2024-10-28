@@ -3,6 +3,7 @@ module Main where
 import Printer
 import Solver
 import Models
+import FileItteract
 {-
 Главный исполняемый файл солвера. Он компилится с помощью команды `ghc solver.hs`. После он должен вызываться с помощью файла executer.py
 Этот файл организует интерфейс, позволяющий итеративно проводить вычисление классов эквивалентности
@@ -28,11 +29,13 @@ loop a = do
 
 main :: IO()
 main = do
-    auto <- generateAutomat ""
+    (x,y) <- readFromFile "./parameters.txt"
+    auto <- generateAutomat (x,y) ""
     loop auto
 
 check :: IO()
 check = do
-    auto <- generateAutomat ""
+    (x,y) <- readFromFile "./parameters.txt"
+    auto <- generateAutomat (x,y) ""
     putStrLn $ generateStringOfTable auto
 

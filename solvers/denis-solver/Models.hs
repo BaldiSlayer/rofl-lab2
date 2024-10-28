@@ -34,14 +34,12 @@ unqPairList arr = arr `insertList` []
 data Automat = Automat{
     prefixesAndColumns :: [([Bool], String)],
     suffixes :: [String],
-    knownResults :: [(String, Bool)]
+    knownResults :: [(String, Bool)],
+    mazeSize :: (Int, Int)
 }
 
-newAutomat :: [([Bool], String)] -> [String] -> [(String, Bool)]-> Automat
-newAutomat m l y = Automat m l y
-
-emptyAutomat :: Automat
-emptyAutomat = Automat [] [] []
+emptyAutomat :: (Int, Int) -> Automat
+emptyAutomat (x,y) = Automat [] [] [] (x,y)
 --------------------------------------------------------------------------------
 
 -- Конкатенация списков с обеспечением уникальности элементов(второй список должен быть гарантировано отсортирован)
