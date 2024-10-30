@@ -195,7 +195,7 @@ func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) strin
 // bfsOnMaze реализует алгоритм поиска в ширину, возвращает обратно данные о предках для каждой клетки
 func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Cell {
 	// Up, Down, Left, Right, это важно, иначе сломается isWallInWay
-	directions := []models.Cell{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 
 	queue := list.New()
 	queue.PushBack(start)

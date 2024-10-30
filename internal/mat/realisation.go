@@ -223,7 +223,7 @@ func (r *Realization) getTransitions() map[models.Cell]map[string]models.Cell {
 
 // toDFA переводит r.maze в детерминированный конечный автомат
 // TODO а это точно надо навешивать как метод на Realization или можно сделать
-// toDFA(maze)
+// toDFA(maze), либо сделать этот метод вообще в maze
 func (r *Realization) toDFA() *automata.DFA {
 	return automata.NewDFA(
 		models.Cell{X: 0, Y: 0},
