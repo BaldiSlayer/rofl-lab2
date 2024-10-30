@@ -3,10 +3,18 @@ package mat
 import (
 	"errors"
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
+	"os"
 
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"github.com/BaldiSlayer/rofl-lab2/internal/models"
+)
+
+const (
+	allCells = iota
+	onlyOut
+	onlyIn
 )
 
 type Realization struct {
@@ -15,6 +23,8 @@ type Realization struct {
 
 	mazeGenerator *mazegen.LightWallsGenerator
 	maze          *maze.ThinWalled
+
+	mazeDFA *automata.DFA
 }
 
 func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Realization {
@@ -38,13 +48,6 @@ func (r *Realization) walk(query string) (int, int) {
 
 // Include осуществляет проверку запроса на вхождение
 func (r *Realization) Include(query string) (bool, error) {
-	path := r.maze.GetPath(
-		models.Cell{X: 0, Y: 0},
-		models.Cell{X: 1, Y: 1},
-	)
-
-	_ = path
-
 	return r.maze.IsOut(r.walk(query)), nil
 }
 
@@ -107,10 +110,146 @@ func (r *Realization) Equal(prefixes []string, suffixes []string, matrix [][]boo
 	return models.EqualResponse{}, nil
 }
 
+// TODO перепроверь границы
+func isSpecial(cell models.Cell, width, height int) bool {
+	return cell.X < -1 || cell.X > width || cell.Y < -1 || cell.Y > height
+}
+
+// addTransitions добавляет для
+func (r *Realization) addTransitions(
+	transitions map[models.Cell]map[string]models.Cell,
+	i, j int,
+) map[models.Cell]map[string]models.Cell {
+	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+	alphabet := []string{"N", "S", "W", "E"}
+
+	for idx, dir := range directions {
+		src := models.Cell{X: j, Y: i}
+		dst := models.Cell{X: j + dir.X, Y: i + dir.Y}
+
+		// в спец клетку(и) можем попасть только из "каймы", там точно нет стенок
+		if isSpecial(dst, r.width, r.height) {
+			transitions[src][alphabet[idx]] = automata.SpecialState()
+
+			continue
+		}
+
+		// если можем пройти - добавить переход в некст клетку, иначе петля
+		if r.maze.CanGo(
+			src,
+			dst,
+		) {
+			transitions[src][alphabet[idx]] = dst
+		} else {
+			transitions[src][alphabet[idx]] = src
+		}
+	}
+
+	return transitions
+}
+
+// mazeIterator итерируется по лабиринту, i это y, j это x
+func (r *Realization) mazeIterator(mode int, f func(y, x int)) {
+	if mode != onlyOut {
+		for i := 0; i < r.height; i++ {
+			for j := 0; j < r.width; j++ {
+				f(i, j)
+			}
+		}
+	}
+
+	if mode != onlyIn {
+		// добавим сверху
+		j := -1
+		for i := 0; i < r.height; i++ {
+			f(i, j)
+		}
+
+		// добавим справа
+		j = r.width
+		for i := 0; i < r.height; i++ {
+			f(i, j)
+		}
+
+		// добавим сверху
+		i := -1
+		for j := 0; j < r.width; j++ {
+			f(i, j)
+		}
+
+		// добавим снизу
+		i = r.height
+		for j := 0; j < r.width; j++ {
+			f(i, j)
+		}
+
+		// уголки
+		f(-1, -1)
+		f(-1, r.width)
+		f(r.height, -1)
+		f(r.height, r.width)
+	}
+}
+
+func (r *Realization) getAllStates() []models.Cell {
+	states := make([]models.Cell, 0, 1+r.width+r.height)
+	states = append(states, automata.SpecialState())
+
+	r.mazeIterator(allCells, func(y, x int) {
+		states = append(states, models.Cell{X: x, Y: y})
+	})
+
+	return states
+}
+
+func (r *Realization) getFinalStates() map[models.Cell]struct{} {
+	finalStates := make(map[models.Cell]struct{})
+	finalStates[automata.SpecialState()] = struct{}{}
+
+	r.mazeIterator(onlyOut, func(y, x int) {
+		finalStates[models.Cell{X: x, Y: y}] = struct{}{}
+	})
+
+	return finalStates
+}
+
+func (r *Realization) getTransitions() map[models.Cell]map[string]models.Cell {
+	transitions := make(map[models.Cell]map[string]models.Cell)
+
+	r.mazeIterator(allCells, func(y, x int) {
+		transitions = r.addTransitions(transitions, y, x)
+	})
+
+	return transitions
+}
+
+func (r *Realization) toDFA() *automata.DFA {
+	return automata.NewDFA(
+		models.Cell{X: 0, Y: 0},
+		r.getFinalStates(),
+		[]string{"N", "S", "W", "E"},
+		r.getTransitions(),
+		r.getAllStates(),
+	)
+}
+
 func (r *Realization) Generate() error {
 	var err error
 
 	r.maze, err = r.mazeGenerator.Generate(r.width, r.height)
+
+	sl := make(map[models.Cell]struct{})
+
+	r.mazeIterator(onlyIn, func(i, j int) {
+		sl[models.Cell{X: i, Y: j}] = struct{}{}
+		fmt.Println(i, j)
+	})
+
+	fmt.Println(sl)
+
+	os.Exit(1)
+
+	r.mazeDFA = r.toDFA()
 
 	return err
 }

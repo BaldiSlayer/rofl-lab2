@@ -2,6 +2,7 @@ package maze
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/models"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -157,9 +158,9 @@ func TestThinWalled_GetPath(t *testing.T) {
 			w := &ThinWalled{
 				Maze: tt.fields.Maze,
 			}
-			if got := w.GetPath(tt.args.start, tt.args.end); got != tt.want {
-				t.Errorf("GetPath() = %v, want %v", got, tt.want)
-			}
+
+			got := w.GetPath(tt.args.start, tt.args.end)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

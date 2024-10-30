@@ -22,23 +22,19 @@ type LightWallCell struct {
 	downState  bool
 }
 
-// left
-func (c *LightWallCell) left() bool {
+func (c *LightWallCell) Left() bool {
 	return c.leftState
 }
 
-// right
-func (c *LightWallCell) right() bool {
+func (c *LightWallCell) Right() bool {
 	return c.rightState
 }
 
-// up
-func (c *LightWallCell) up() bool {
+func (c *LightWallCell) Up() bool {
 	return c.upState
 }
 
-// down
-func (c *LightWallCell) down() bool {
+func (c *LightWallCell) Down() bool {
 	return c.downState
 }
 
@@ -61,6 +57,67 @@ func (w *ThinWalled) getDest(i, j int, a byte) (int, int) {
 	return i, j
 }
 
+func (w *ThinWalled) vecToLetter(vec models.Vector) string {
+	return map[models.Vector]string{
+		models.Vector{X: 0, Y: -1}: "N",
+		models.Vector{X: 0, Y: 1}:  "S",
+		models.Vector{X: -1, Y: 0}: "W",
+		models.Vector{X: 1, Y: 0}:  "E",
+	}[vec]
+}
+
+// symbolCanGo проверяет можно ли пройти из src по символу symbol
+func (w *ThinWalled) canGoFromSrc(src models.Cell, symbol string) bool {
+	switch symbol {
+	case "N":
+		return w.Maze[src.Y][src.X].Up()
+	case "S":
+		return w.Maze[src.Y][src.X].Down()
+	case "W":
+		return w.Maze[src.Y][src.X].Left()
+	case "E":
+		return w.Maze[src.Y][src.X].Right()
+	}
+
+	return false
+}
+
+// canGoToDst проверяет можно ли попасть в dst по символу symbol
+func (w *ThinWalled) canGoToDst(dst models.Cell, symbol string) bool {
+	switch symbol {
+	case "N":
+		return w.Maze[dst.Y][dst.X].Down()
+	case "S":
+		return w.Maze[dst.Y][dst.X].Up()
+	case "W":
+		return w.Maze[dst.Y][dst.X].Right()
+	case "E":
+		return w.Maze[dst.Y][dst.X].Left()
+	}
+
+	return false
+}
+
+// CanGo - проверяет можем ли мы пройти от src до dst
+func (w *ThinWalled) CanGo(src, dst models.Cell) bool {
+	symbol := w.vecToLetter(models.Vector{
+		X: dst.X - src.X,
+		Y: dst.Y - dst.Y,
+	})
+
+	// если обе вне - никто не мешает
+	if w.IsOut(src.Y, src.X) && w.IsOut(dst.Y, dst.X) {
+		return true
+	}
+
+	// если клетка вне лабиринта, то нужно посмотреть обратную стену
+	if w.IsOut(src.Y, src.X) {
+		return w.canGoToDst(dst, symbol)
+	}
+
+	return w.canGoFromSrc(src, symbol)
+}
+
 // TODO refactor
 func (w *ThinWalled) GetPosAfterStep(i, j int, a byte) (int, int) {
 	destI, destJ := w.getDest(i, j, a)
@@ -74,22 +131,22 @@ func (w *ThinWalled) GetPosAfterStep(i, j int, a byte) (int, int) {
 		// проверка "запустит ли" меня клетка лабиринта
 		switch a {
 		case 'N':
-			if w.Maze[destI][destJ].down() {
+			if w.Maze[destI][destJ].Down() {
 				return destI, destJ
 			}
 			return i, j
 		case 'S':
-			if w.Maze[destI][destJ].up() {
+			if w.Maze[destI][destJ].Up() {
 				return destI, destJ
 			}
 			return i, j
 		case 'W':
-			if w.Maze[destI][destJ].right() {
+			if w.Maze[destI][destJ].Right() {
 				return destI, destJ
 			}
 			return i, j
 		case 'E':
-			if w.Maze[destI][destJ].left() {
+			if w.Maze[destI][destJ].Left() {
 				return destI, destJ
 			}
 			return i, j
@@ -98,22 +155,22 @@ func (w *ThinWalled) GetPosAfterStep(i, j int, a byte) (int, int) {
 
 	switch a {
 	case 'N':
-		if w.Maze[i][j].up() {
+		if w.Maze[i][j].Up() {
 			return destI, destJ
 		}
 		return i, j
 	case 'S':
-		if w.Maze[i][j].down() {
+		if w.Maze[i][j].Down() {
 			return destI, destJ
 		}
 		return i, j
 	case 'W':
-		if w.Maze[i][j].left() {
+		if w.Maze[i][j].Left() {
 			return destI, destJ
 		}
 		return i, j
 	case 'E':
-		if w.Maze[i][j].right() {
+		if w.Maze[i][j].Right() {
 			return destI, destJ
 		}
 		return i, j
@@ -131,7 +188,7 @@ func (w *ThinWalled) Print() {
 		rowStr := ""
 
 		for _, cell := range layer {
-			if cell.right() {
+			if cell.Right() {
 				rowStr += " "
 			} else {
 				rowStr += "|"
@@ -143,7 +200,7 @@ func (w *ThinWalled) Print() {
 		bottomStr := ""
 
 		for _, cell := range layer {
-			if cell.down() {
+			if cell.Down() {
 				bottomStr += " "
 			} else {
 				bottomStr += "-"
@@ -177,20 +234,20 @@ func (w *ThinWalled) isWallInWay(src, dest models.Cell, actionNumber int) bool {
 
 	if w.IsOut(src.Y, src.X) {
 		isWallDirs := [...]func() bool{
-			w.Maze[dest.Y][dest.X].down,
-			w.Maze[dest.Y][dest.X].up,
-			w.Maze[dest.Y][dest.X].right,
-			w.Maze[dest.Y][dest.X].left,
+			w.Maze[dest.Y][dest.X].Down,
+			w.Maze[dest.Y][dest.X].Up,
+			w.Maze[dest.Y][dest.X].Right,
+			w.Maze[dest.Y][dest.X].Left,
 		}
 
 		return !isWallDirs[actionNumber]()
 	}
 
 	isWallDirs := [...]func() bool{
-		w.Maze[src.Y][src.X].up,
-		w.Maze[src.Y][src.X].down,
-		w.Maze[src.Y][src.X].left,
-		w.Maze[src.Y][src.X].right,
+		w.Maze[src.Y][src.X].Up,
+		w.Maze[src.Y][src.X].Down,
+		w.Maze[src.Y][src.X].Left,
+		w.Maze[src.Y][src.X].Right,
 	}
 
 	return !isWallDirs[actionNumber]()
@@ -198,7 +255,7 @@ func (w *ThinWalled) isWallInWay(src, dest models.Cell, actionNumber int) bool {
 
 // GetPath находит путь от start до end
 func (w *ThinWalled) GetPath(start, end models.Cell) string {
-	// up, down, left, right, это важно, иначе сломается isWallInWay
+	// Up, Down, Left, Right, это важно, иначе сломается isWallInWay
 	directions := []models.Cell{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 
 	queue := list.New()

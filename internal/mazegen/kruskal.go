@@ -56,7 +56,8 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 	})
 
 	// TODO return error if > int max, а это точно случится?
-	// кажется в этом случае я даже не смогу хранить лабиринт (не хватит памяти)
+	// кажется в этом случае я даже не смогу хранить лабиринт (не хватит памяти), так что такую
+	// проверку можно будет сделать при старте программы и считывании чисел
 	disDU := dsu.New(width * height)
 
 	for _, wallInst := range walls {

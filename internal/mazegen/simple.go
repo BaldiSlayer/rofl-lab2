@@ -1,9 +1,7 @@
 package mazegen
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"math/rand"
-	"time"
 )
 
 type SimpleGenerator struct {
@@ -50,30 +48,4 @@ func generateMaze(grid [][]bool, x, y, height, width int) {
 			grid[nx][ny] = true
 		}
 	}
-}
-
-func NewSimpleGenerator() *SimpleGenerator {
-	return &SimpleGenerator{}
-}
-
-func (sg *SimpleGenerator) Generate(width, height int) (*maze.Maze, error) {
-	rand.Seed(time.Now().UnixNano())
-
-	grid := make([][]bool, height)
-	for i := range grid {
-		grid[i] = make([]bool, width)
-	}
-
-	generateMaze(grid, 0, 0, height, width)
-
-	y := height - 1
-	for x := 0; x < width; x++ {
-		if !grid[y][x] && grid[y-1][x] {
-			grid[y][x] = true
-
-			break
-		}
-	}
-
-	return maze.New(grid), nil
 }
