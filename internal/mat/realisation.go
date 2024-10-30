@@ -114,9 +114,9 @@ func isSpecial(cell models.Cell, width, height int) bool {
 
 // addTransitions добавляет для
 func (r *Realization) addTransitions(
-	transitions map[models.Cell]map[string]models.Cell,
+	transitions automata.Transitions,
 	i, j int,
-) map[models.Cell]map[string]models.Cell {
+) automata.Transitions {
 	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 	alphabet := []string{"N", "S", "W", "E"}
 
@@ -126,7 +126,7 @@ func (r *Realization) addTransitions(
 
 		// в спец клетку(и) можем попасть только из "каймы", там точно нет стенок
 		if isSpecial(dst, r.width, r.height) {
-			transitions[src][alphabet[idx]] = automata.SpecialState()
+			transitions.Add(src, automata.SpecialState(), alphabet[idx])
 
 			continue
 		}
@@ -136,9 +136,9 @@ func (r *Realization) addTransitions(
 			src,
 			dst,
 		) {
-			transitions[src][alphabet[idx]] = dst
+			transitions.Add(src, dst, alphabet[idx])
 		} else {
-			transitions[src][alphabet[idx]] = src
+			transitions.Add(src, src, alphabet[idx])
 		}
 	}
 
@@ -211,8 +211,8 @@ func (r *Realization) getFinalStates() map[models.Cell]struct{} {
 	return finalStates
 }
 
-func (r *Realization) getTransitions() map[models.Cell]map[string]models.Cell {
-	transitions := make(map[models.Cell]map[string]models.Cell)
+func (r *Realization) getTransitions() automata.Transitions {
+	transitions := automata.NewTransitions()
 
 	r.mazeIterator(allCells, func(y, x int) {
 		transitions = r.addTransitions(transitions, y, x)
