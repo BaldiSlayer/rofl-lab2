@@ -19,9 +19,11 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 		mazeField[i] = make([]maze.LightWallCell, width)
 	}
 
-	generatedMaze := maze.ThinWalled{
-		Maze: mazeField,
-	}
+	generatedMaze := maze.NewThinWalled(
+		width,
+		height,
+		mazeField,
+	)
 
 	// TODO можно предвыделить, мне сейчас лень умножать
 	walls := make([]maze.Wall, 0)
@@ -95,5 +97,5 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 	generatedMaze.MakeExit(rand.Intn(height), 0)
 	generatedMaze.MakeExit(rand.Intn(height), width-1)
 
-	return &generatedMaze, nil
+	return generatedMaze, nil
 }
