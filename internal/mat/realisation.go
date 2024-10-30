@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
-	"os"
-
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"github.com/BaldiSlayer/rofl-lab2/internal/models"
 )
@@ -149,6 +147,7 @@ func (r *Realization) addTransitions(
 }
 
 // mazeIterator итерируется по лабиринту, i это y, j это x
+// TODO сделать mode битовой маской
 func (r *Realization) mazeIterator(mode int, f func(y, x int)) {
 	if mode != onlyOut {
 		for i := 0; i < r.height; i++ {
@@ -223,6 +222,9 @@ func (r *Realization) getTransitions() map[models.Cell]map[string]models.Cell {
 	return transitions
 }
 
+// toDFA переводит r.maze в детерминированный конечный автомат
+// TODO а это точно надо навешивать как метод на Realization или можно сделать
+// toDFA(maze)
 func (r *Realization) toDFA() *automata.DFA {
 	return automata.NewDFA(
 		models.Cell{X: 0, Y: 0},
@@ -238,17 +240,6 @@ func (r *Realization) Generate() error {
 
 	r.maze, err = r.mazeGenerator.Generate(r.width, r.height)
 
-	sl := make(map[models.Cell]struct{})
-
-	r.mazeIterator(onlyIn, func(i, j int) {
-		sl[models.Cell{X: i, Y: j}] = struct{}{}
-		fmt.Println(i, j)
-	})
-
-	fmt.Println(sl)
-
-	os.Exit(1)
-
 	r.mazeDFA = r.toDFA()
 
 	return err
@@ -262,4 +253,17 @@ func (r *Realization) Print() ([]string, error) {
 	r.maze.Print()
 
 	return nil, nil
+}
+
+func (r *Realization) tableToDFA() *automata.DFA {
+	alphabet := []string{"N", "S", "W", "E"}
+	_ = alphabet
+
+	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+	_ = directions
+
+	startState := models.Cell{X: 0, Y: 0}
+	_ = startState
+
+	return &automata.DFA{}
 }

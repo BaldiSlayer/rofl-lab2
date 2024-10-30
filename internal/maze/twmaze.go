@@ -57,7 +57,7 @@ func (w *ThinWalled) getDest(i, j int, a byte) (int, int) {
 	return i, j
 }
 
-func (w *ThinWalled) vecToLetter(vec models.Vector) string {
+func vecToLetter(vec models.Vector) string {
 	return map[models.Vector]string{
 		models.Vector{X: 0, Y: -1}: "N",
 		models.Vector{X: 0, Y: 1}:  "S",
@@ -100,7 +100,7 @@ func (w *ThinWalled) canGoToDst(dst models.Cell, symbol string) bool {
 
 // CanGo - проверяет можем ли мы пройти от src до dst
 func (w *ThinWalled) CanGo(src, dst models.Cell) bool {
-	symbol := w.vecToLetter(models.Vector{
+	symbol := vecToLetter(models.Vector{
 		X: dst.X - src.X,
 		Y: dst.Y - dst.Y,
 	})
@@ -253,8 +253,25 @@ func (w *ThinWalled) isWallInWay(src, dest models.Cell, actionNumber int) bool {
 	return !isWallDirs[actionNumber]()
 }
 
-// GetPath находит путь от start до end
-func (w *ThinWalled) GetPath(start, end models.Cell) string {
+// restorePath занимается восстановлением пути от start до end по массиву
+// предков prev
+func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) string {
+	path := ""
+
+	cur := end
+	for cur != start {
+		path = vecToLetter(models.Vector{
+			X: cur.X - prev[cur].X,
+			Y: cur.Y - prev[cur].Y,
+		}) + path
+
+		cur = prev[cur]
+	}
+
+	return path
+}
+
+func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Cell {
 	// Up, Down, Left, Right, это важно, иначе сломается isWallInWay
 	directions := []models.Cell{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 
@@ -294,60 +311,21 @@ func (w *ThinWalled) GetPath(start, end models.Cell) string {
 		}
 	}
 
-	// восстановление пути
-	path := ""
-
-	cur := end
-	for cur != start {
-		parent := prev[cur]
-
-		step := models.Cell{
-			X: cur.X - parent.X,
-			Y: cur.Y - parent.Y,
-		}
-
-		down := models.Cell{
-			X: 0,
-			Y: 1,
-		}
-
-		up := models.Cell{
-			X: 0,
-			Y: -1,
-		}
-
-		left := models.Cell{
-			X: -1,
-			Y: 0,
-		}
-
-		right := models.Cell{
-			X: 1,
-			Y: 0,
-		}
-
-		if step == down {
-			path = "S" + path
-		}
-
-		if step == up {
-			path = "N" + path
-		}
-
-		if step == left {
-			path = "W" + path
-		}
-
-		if step == right {
-			path = "E" + path
-		}
-
-		cur = parent
-	}
-
-	return path
+	return prev
 }
 
+// GetPath находит путь от start до end
+func (w *ThinWalled) GetPath(start, end models.Cell) string {
+	return restorePath(
+		start,
+		end,
+		w.bfsOnMaze(start, end),
+	)
+}
+
+// MakeExit создает выход в (row, col) путем удаления стены
+// применяется для удаления стен в граничных точках, поэтому удаляет
+// лишь одну стенку
 func (w *ThinWalled) MakeExit(row, col int) {
 	if row == 0 {
 		w.Maze[row][col].upState = true
