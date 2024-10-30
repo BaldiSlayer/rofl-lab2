@@ -42,19 +42,19 @@ type ThinWalled struct {
 	Maze [][]LightWallCell
 }
 
-func (w *ThinWalled) getDest(i, j int, a byte) (int, int) {
+func (w *ThinWalled) getDest(src models.Cell, a byte) models.Cell {
 	switch a {
 	case 'N':
-		return i - 1, j
+		return models.Cell{X: src.X, Y: src.Y - 1}
 	case 'S':
-		return i + 1, j
+		return models.Cell{X: src.X, Y: src.Y + 1}
 	case 'W':
-		return i, j - 1
+		return models.Cell{X: src.X - 1, Y: src.Y}
 	case 'E':
-		return i, j + 1
+		return models.Cell{X: src.X + 1, Y: src.Y}
 	}
 
-	return i, j
+	return src
 }
 
 func vecToLetter(vec models.Vector) string {
@@ -102,85 +102,35 @@ func (w *ThinWalled) canGoToDst(dst models.Cell, symbol string) bool {
 func (w *ThinWalled) CanGo(src, dst models.Cell) bool {
 	symbol := vecToLetter(models.Vector{
 		X: dst.X - src.X,
-		Y: dst.Y - dst.Y,
+		Y: dst.Y - src.Y,
 	})
 
 	// если обе вне - никто не мешает
-	if w.IsOut(src.Y, src.X) && w.IsOut(dst.Y, dst.X) {
+	if w.IsOut(src) && w.IsOut(dst) {
 		return true
 	}
 
 	// если клетка вне лабиринта, то нужно посмотреть обратную стену
-	if w.IsOut(src.Y, src.X) {
+	if w.IsOut(src) {
 		return w.canGoToDst(dst, symbol)
 	}
 
 	return w.canGoFromSrc(src, symbol)
 }
 
-// TODO refactor
-func (w *ThinWalled) GetPosAfterStep(i, j int, a byte) (int, int) {
-	destI, destJ := w.getDest(i, j, a)
+// GetPosAfterStep получает позицию, которая будет после прохода по символу a из src
+func (w *ThinWalled) GetPosAfterStep(src models.Cell, a byte) models.Cell {
+	dst := w.getDest(src, a)
 
-	// не хочу получать fatalpanic
-	if w.IsOut(i, j) {
-		if w.IsOut(destI, destJ) {
-			return destI, destJ
-		}
-
-		// проверка "запустит ли" меня клетка лабиринта
-		switch a {
-		case 'N':
-			if w.Maze[destI][destJ].Down() {
-				return destI, destJ
-			}
-			return i, j
-		case 'S':
-			if w.Maze[destI][destJ].Up() {
-				return destI, destJ
-			}
-			return i, j
-		case 'W':
-			if w.Maze[destI][destJ].Right() {
-				return destI, destJ
-			}
-			return i, j
-		case 'E':
-			if w.Maze[destI][destJ].Left() {
-				return destI, destJ
-			}
-			return i, j
-		}
+	if w.CanGo(src, dst) {
+		return dst
 	}
 
-	switch a {
-	case 'N':
-		if w.Maze[i][j].Up() {
-			return destI, destJ
-		}
-		return i, j
-	case 'S':
-		if w.Maze[i][j].Down() {
-			return destI, destJ
-		}
-		return i, j
-	case 'W':
-		if w.Maze[i][j].Left() {
-			return destI, destJ
-		}
-		return i, j
-	case 'E':
-		if w.Maze[i][j].Right() {
-			return destI, destJ
-		}
-		return i, j
-	}
-
-	return i, j
+	return src
 }
 
-func (w *ThinWalled) IsOut(i, j int) bool {
-	return i < 0 || i >= len(w.Maze) || j < 0 || j >= len(w.Maze[0])
+func (w *ThinWalled) IsOut(cell models.Cell) bool {
+	return cell.Y < 0 || cell.Y >= len(w.Maze) || cell.X < 0 || cell.X >= len(w.Maze[0])
 }
 
 func (w *ThinWalled) Print() {
@@ -225,36 +175,7 @@ func (w *ThinWalled) cellCordsToInt(x, y int) int {
 	return y*len(w.Maze[0]) + x
 }
 
-// isWallInWay проверяет, будет ли стена на пути (если да, то мы не можем пойти)
-func (w *ThinWalled) isWallInWay(src, dest models.Cell, actionNumber int) bool {
-	// если обе клетки вне - нам ничто не мешает
-	if w.IsOut(src.Y, src.X) && w.IsOut(dest.Y, dest.X) {
-		return false
-	}
-
-	if w.IsOut(src.Y, src.X) {
-		isWallDirs := [...]func() bool{
-			w.Maze[dest.Y][dest.X].Down,
-			w.Maze[dest.Y][dest.X].Up,
-			w.Maze[dest.Y][dest.X].Right,
-			w.Maze[dest.Y][dest.X].Left,
-		}
-
-		return !isWallDirs[actionNumber]()
-	}
-
-	isWallDirs := [...]func() bool{
-		w.Maze[src.Y][src.X].Up,
-		w.Maze[src.Y][src.X].Down,
-		w.Maze[src.Y][src.X].Left,
-		w.Maze[src.Y][src.X].Right,
-	}
-
-	return !isWallDirs[actionNumber]()
-}
-
-// restorePath занимается восстановлением пути от start до end по массиву
-// предков prev
+// restorePath занимается восстановлением пути от start до end по даннным о предках prev
 func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) string {
 	path := ""
 
@@ -271,6 +192,7 @@ func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) strin
 	return path
 }
 
+// bfsOnMaze реализует алгоритм поиска в ширину, возвращает обратно данные о предках для каждой клетки
 func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Cell {
 	// Up, Down, Left, Right, это важно, иначе сломается isWallInWay
 	directions := []models.Cell{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
@@ -282,8 +204,6 @@ func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Ce
 	visited[start] = struct{}{}
 
 	prev := make(map[models.Cell]models.Cell)
-
-	// делаем вид, что тут пришли сами в себя
 	prev[start] = start
 
 	for queue.Len() > 0 {
@@ -294,15 +214,14 @@ func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Ce
 			break
 		}
 
-		for number, dir := range directions {
+		for _, dir := range directions {
 			next := models.Cell{
 				X: current.X + dir.X,
 				Y: current.Y + dir.Y,
 			}
 
-			_, vis := visited[next]
-
-			if !w.isWallInWay(current, next, number) && !vis {
+			// если можем перейти в клетку и там еще не были
+			if _, vis := visited[next]; w.CanGo(current, next) && !vis {
 				visited[next] = struct{}{}
 
 				queue.PushBack(next)

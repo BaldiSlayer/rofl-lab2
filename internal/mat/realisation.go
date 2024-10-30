@@ -34,14 +34,14 @@ func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Realiz
 }
 
 // walk возвращает позицию после прохождения по лабиринту по пути query
-func (r *Realization) walk(query string) (int, int) {
-	i, j := 0, 0
+func (r *Realization) walk(query string) models.Cell {
+	start := models.Cell{X: 0, Y: 0}
 
 	for sPos := range query {
-		i, j = r.maze.GetPosAfterStep(i, j, query[sPos])
+		start = r.maze.GetPosAfterStep(start, query[sPos])
 	}
 
-	return i, j
+	return start
 }
 
 // Include осуществляет проверку запроса на вхождение
@@ -60,8 +60,7 @@ func (r *Realization) allCellsAreReachable(prefixes []string) (reachableResponse
 	reachableCells := make(map[models.Cell]struct{})
 
 	for _, prefix := range prefixes {
-		i, j := r.walk(prefix)
-		cell := models.Cell{X: j, Y: i}
+		cell := r.walk(prefix)
 
 		reachableCells[cell] = struct{}{}
 	}
