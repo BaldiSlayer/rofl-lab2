@@ -401,7 +401,6 @@ func (w *ThinWalled) getTransitions() automata.Transitions {
 
 	w.mazeIterator(bitMaskStorerStore(inCells, outCells), func(y, x int) {
 		transitions = w.addTransitions(transitions, y, x)
-		fmt.Println(x, y)
 	})
 
 	return transitions

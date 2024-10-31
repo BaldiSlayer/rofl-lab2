@@ -297,16 +297,16 @@ func TestThinWalled_ToDFA(t *testing.T) {
 				[]models.Cell{
 					automata.SpecialState(),
 
-					{X: -1, Y: -1},
-					{X: 0, Y: -1},
-					{X: 1, Y: -1},
-
-					{X: -1, Y: 0},
 					{X: 0, Y: 0},
+					{X: -1, Y: 0},
 					{X: 1, Y: 0},
 
-					{X: -1, Y: 1},
+					{X: 0, Y: -1},
 					{X: 0, Y: 1},
+					{X: -1, Y: -1},
+
+					{X: 1, Y: -1},
+					{X: -1, Y: 1},
 					{X: 1, Y: 1},
 				},
 			),
