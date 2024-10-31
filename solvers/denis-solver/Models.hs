@@ -18,9 +18,9 @@ lookupMap ((x,y):xs) k | k == x = Just y
 
 insert :: (Ord k) => (k,a) -> [(k,a)] -> [(k,a)]
 insert x [] = [x]
-insert (k, e) ((d,f):xs) | k > d  = (d,f) : (insert (k,e) xs)
-                         | k == d = ((d,f):xs)
-                         | otherwise = (k,e):(d,f):xs
+insert (x, y) ((d,f):xs) | x > d  = (d,f) : (insert (x,y) xs)
+                         | x == d = ((d,f):xs)
+                         | otherwise = (x,y):(d,f):xs
 
 insertList :: (Ord k) => [(k,a)] -> [(k,a)] -> [(k,a)]
 insertList [] xs = xs
@@ -45,14 +45,13 @@ emptyAutomat (x,y) = Automat [] [] [] (x,y)
 -- Конкатенация списков с обеспечением уникальности элементов(второй список должен быть гарантировано отсортирован)
 unqConcat :: (Ord a) => [a] -> [a] -> [a]
 unqConcat [] xs = xs
-unqConcat (y:ys) xs = ys `unqConcat` (y `unqAppend` xs)  
+unqConcat (y:ys) xs = y `unqAppend` (ys `unqConcat` xs)  
 
 unqAppend :: (Ord a) =>  a -> [a] -> [a]
 unqAppend x [] = [x]
 unqAppend x (y:ys) | x > y = y : (unqAppend x ys)
                    | x == y = y : ys
                    | otherwise = x : y : ys  
-
 ---------------------------------------------------------------------------------
 {-Генерирует список всех префиксов, начиная с пустого префикса-}
 generatePrefixes :: String -> [String]
@@ -71,5 +70,5 @@ generateSuffixes str = reverse (genSuf str) where
 -- Расширяет список строк
 expandList :: [String] -> [String]
 expandList [] = []
-expandList (x:xs) = [x, (x++"N"), (x++"S"), (x++"W"), (x++"E")] `unqConcat` (expandList xs)
+expandList (x:xs) = [ (x++"N"), (x++"S"), (x++"W"), (x++"E"), x] `unqConcat` (expandList xs)
 

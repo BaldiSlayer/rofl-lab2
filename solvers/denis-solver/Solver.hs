@@ -15,6 +15,19 @@ generateMaplistFromList (x:xs) sl = do
     return ((s, x):stail)
 -}
 
+filterOut :: Automat -> [([Bool], String)] -> IO [([Bool], String)]
+filterOut a [] = return []
+filterOut a (x:xs) = do
+    r1 <- isOut a x
+    r2 <- filterOut a xs
+    if r1
+        then return r2
+        else return (x:r2)
+    where
+    isOut auto (bs, str) = do 
+        (_, res) <- listisInLanguageCheck auto ["", "S", "W", "N", "E"] str
+        return (res  == [True, True, True, True, True]) 
+
 -- Мемоизированная версия функции
 generateMaplistFromListCheck :: Automat -> [String] -> [String] -> IO (Automat, [([Bool], String)])
 generateMaplistFromListCheck a [] sl = do
@@ -27,11 +40,12 @@ generateMaplistFromListCheck a (x:xs) sl = do
 {-Создает таблицу классов эквивалентности по строке-}
 generateAutomat ::(Int, Int) -> String -> IO Automat
 generateAutomat size str = do
-                (a, mapa) <- generateMaplistFromListCheck (emptyAutomat size) prefList suffList 
+                (a, mapa) <- generateMaplistFromListCheck (emptyAutomat size) prefList suffList
+                mapa1 <- filterOut a mapa
                 return $ (Automat (unqPairList mapa) suffList (knownResults a) size)
                     where 
                         prefList = expandList $ generatePrefixes str
-                        suffList = ["", "N", "S", "W", "E"]
+                        suffList = ["","E","N","S","W"]
 
 {-Функция добавляет суффиксы строки к существующей таблице классов эквивалентности-}
 addSufToAutomat :: Automat -> String -> IO Automat
