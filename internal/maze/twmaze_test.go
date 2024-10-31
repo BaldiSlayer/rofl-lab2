@@ -2,11 +2,12 @@ package maze
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestThinWalled_GetPath(t *testing.T) {

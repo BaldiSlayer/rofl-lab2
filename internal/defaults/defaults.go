@@ -11,3 +11,7 @@ func GetAlphabet() []byte {
 func GetDirections() []models.Vector {
 	return []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 }
+
+const (
+	epsilonSymbol = "e"
+)

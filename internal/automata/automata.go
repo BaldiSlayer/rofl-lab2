@@ -2,6 +2,7 @@ package automata
 
 import (
 	"fmt"
+
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
 

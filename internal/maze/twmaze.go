@@ -77,10 +77,10 @@ func vecToLetter(vec models.Vector) byte {
 	}[vec]
 }
 
-// isSpecial проверяет является ли клетка особым состоянием
+// IsSpecial проверяет является ли клетка особым состоянием
 // особое состояние - любая клетка вне лабиринта и его каймы в одну клетку
-func isSpecial(cell models.Cell, width, height int) bool {
-	return cell.X < -1 || cell.X > width || cell.Y < -1 || cell.Y > height
+func (w *ThinWalled) IsSpecial(cell models.Cell) bool {
+	return cell.X < -1 || cell.X > w.width || cell.Y < -1 || cell.Y > w.height
 }
 
 // restorePath занимается восстановлением пути от start до end по даннным о предках prev
@@ -100,7 +100,7 @@ func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) strin
 	return path
 }
 
-func (w *ThinWalled) getDest(src models.Cell, a byte) models.Cell {
+func (w *ThinWalled) GetDest(src models.Cell, a byte) models.Cell {
 	switch a {
 	case 'N':
 		return models.Cell{X: src.X, Y: src.Y - 1}
@@ -169,7 +169,7 @@ func (w *ThinWalled) CanGo(src, dst models.Cell) bool {
 
 // GetPosAfterStep получает позицию, которая будет после прохода по символу a из src
 func (w *ThinWalled) GetPosAfterStep(src models.Cell, a byte) models.Cell {
-	dst := w.getDest(src, a)
+	dst := w.GetDest(src, a)
 
 	if w.CanGo(src, dst) {
 		return dst
@@ -180,6 +180,11 @@ func (w *ThinWalled) GetPosAfterStep(src models.Cell, a byte) models.Cell {
 
 func (w *ThinWalled) IsOut(cell models.Cell) bool {
 	return cell.Y < 0 || cell.Y >= len(w.Maze) || cell.X < 0 || cell.X >= len(w.Maze[0])
+}
+
+// IsBorder является ли клетка "каймой лабиринта"
+func (w *ThinWalled) IsBorder(cell models.Cell) bool {
+	return cell.X == -1 || cell.Y == -1 || cell.X == w.width || cell.Y == w.height
 }
 
 func (w *ThinWalled) Print() {
@@ -308,7 +313,7 @@ func (w *ThinWalled) addTransitions(
 		dst := models.Cell{X: j + dir.X, Y: i + dir.Y}
 
 		// в спец клетку(и) можем попасть только из "каймы", там точно нет стенок
-		if isSpecial(dst, w.width, w.height) {
+		if w.IsSpecial(dst) {
 			transitions.Add(src, automata.SpecialState(), alphabet[idx])
 
 			continue
