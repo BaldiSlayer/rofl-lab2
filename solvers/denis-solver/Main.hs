@@ -4,14 +4,21 @@ import Printer
 import Solver
 import Models
 import FileItteract
+
+import System.IO (hFlush, stdout)
 {-
 Главный исполняемый файл солвера. Он компилится с помощью команды `ghc solver.hs`. После он должен вызываться с помощью файла executer.py
 Этот файл организует интерфейс, позволяющий итеративно проводить вычисление классов эквивалентности
 -}
 
+sendTable :: String -> IO()
+sendTable msg = do
+    putStrLn msg
+    hFlush stdout
+
 checkAutomat :: Automat -> IO(Bool, String)
 checkAutomat a = do
-    putStrLn $ generateStringOfTable a
+    sendTable $ generateStringOfTable a
     str <- getLine
     if str == "TRUE"
         then return (True, "")

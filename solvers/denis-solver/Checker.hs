@@ -1,10 +1,12 @@
 module Checker where
 import Models
+import System.IO (hFlush, stdout)
 
 {-Делает запрос к MAT(или пользователь) на получение данных о вхождение в язык-}
 isInLanguage :: String -> IO Bool
 isInLanguage str = do
             putStrLn str
+            hFlush stdout
             res <- getLine
             return ((length res) /= 0 && (head res) == '1') -- для простоты тестирования, "не 1" - 0
 
