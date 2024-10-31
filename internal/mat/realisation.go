@@ -109,6 +109,8 @@ func (r *Realization) Generate() error {
 
 	r.mazeDFA = r.maze.ToDFA()
 
+	fmt.Println(r.mazeDFA.GenerateDot())
+
 	return err
 }
 

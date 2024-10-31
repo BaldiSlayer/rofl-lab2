@@ -401,6 +401,7 @@ func (w *ThinWalled) getTransitions() automata.Transitions {
 
 	w.mazeIterator(bitMaskStorerStore(inCells, outCells), func(y, x int) {
 		transitions = w.addTransitions(transitions, y, x)
+		fmt.Println(x, y)
 	})
 
 	return transitions
@@ -408,8 +409,10 @@ func (w *ThinWalled) getTransitions() automata.Transitions {
 
 // ToDFA переводит лабиринт в детерминированный конечный автомат
 func (w *ThinWalled) ToDFA() *automata.DFA {
-	finalStates := w.getFinalStates()
 	transitions := w.getTransitions()
+
+	finalStates := w.getFinalStates()
+
 	allStates := w.getAllStates()
 
 	return automata.NewDFA(
