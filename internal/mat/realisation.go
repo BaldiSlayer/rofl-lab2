@@ -41,7 +41,7 @@ func (r *Implementation) walk(query string) models.Cell {
 
 // Include осуществляет проверку запроса на вхождение
 func (r *Implementation) Include(query string) (bool, error) {
-	return r.maze.IsOut(r.walk(query)), nil
+	return r.mazeDFA.Include(query, r.maze.IsSpecial), nil
 }
 
 func (r *Implementation) genCounterForStates(state models.Cell) string {

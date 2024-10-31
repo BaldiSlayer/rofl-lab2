@@ -126,6 +126,15 @@ func vecToLetter(vec models.Vector) byte {
 	}[vec]
 }
 
+func symbolToVec(symbol byte) models.Vector {
+	return map[byte]models.Vector{
+		'N': {X: 0, Y: -1},
+		'S': {X: 0, Y: 1},
+		'W': {X: -1, Y: 0},
+		'E': {X: 1, Y: 0},
+	}[symbol]
+}
+
 func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) string {
 	path := ""
 
@@ -218,4 +227,35 @@ func reverse(s string) string {
 	}
 
 	return string(runes)
+}
+
+// Include проверяет, распознает ли автомат слово
+func (dfa *DFA) Include(query string, isSpecial func(cell models.Cell) bool) bool {
+	curState := defaults.GetStartState()
+	nonDKAState := models.Cell{}
+
+	for _, letter := range query {
+		vec := symbolToVec(byte(letter))
+
+		if curState == SpecialState() {
+			nonDKAState = models.Cell{X: nonDKAState.X + vec.X, Y: nonDKAState.Y + vec.Y}
+
+			// если смогли вернуться в лабиринт/кайму
+			if !isSpecial(nonDKAState) {
+				curState = nonDKAState
+			}
+
+			continue
+		}
+
+		nonDKAState = curState
+		curState = dfa.Transitions()[Transition{Src: curState, Symbol: byte(letter)}]
+		if curState == SpecialState() {
+			nonDKAState = models.Cell{X: curState.X + vec.X, Y: curState.Y + vec.Y}
+		}
+	}
+
+	_, ok := dfa.finalStates[curState]
+
+	return ok
 }

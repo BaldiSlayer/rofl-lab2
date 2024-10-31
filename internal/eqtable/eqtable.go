@@ -39,7 +39,7 @@ func (table *OverMaze) getWords() map[string]bool {
 	return mp
 }
 
-func (table *OverMaze) wordIterate(
+func wordIterate(
 	startState models.Cell,
 	word string,
 	maze *maze.ThinWalled,
@@ -92,7 +92,7 @@ func (table *OverMaze) ToDFA(maze *maze.ThinWalled) *automata.DFA {
 	// обходим полученную таблицу
 	for word, included := range table.getWords() {
 		// стоим в начале
-		stateAfterWalk := table.wordIterate(startState, word, maze, aut)
+		stateAfterWalk := wordIterate(startState, word, maze, aut)
 
 		// если на пересечении стояла единичка, добавляем в финальные состояния
 		if included {
