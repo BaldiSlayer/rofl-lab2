@@ -3,6 +3,7 @@ package app
 import (
 	"bufio"
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mat"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"log/slog"
@@ -51,7 +52,7 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 			return s == "p"
 		},
 		Action: func(s string) error {
-			maze, err := lab2.teacher.Print()
+			maze, err := lab2.teacher.Visualize()
 			if err != nil {
 				return err
 			}
@@ -93,7 +94,9 @@ func (lab2 *Lab2) addCliHandlers() []Handler {
 		Action: func(s string) error {
 			_ = s[2:]
 
-			res, err := lab2.teacher.Equal(nil, nil, nil)
+			eqTable := eqtable.NewOverMaze(nil, nil, nil)
+
+			res, err := lab2.teacher.Equal(eqTable)
 			if err != nil {
 				return err
 			}

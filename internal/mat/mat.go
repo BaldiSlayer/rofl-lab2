@@ -1,6 +1,7 @@
 package mat
 
 import (
+	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
 
@@ -10,7 +11,7 @@ type MAT interface {
 	// Include - запрос на включение
 	Include(query string) (bool, error)
 	// Equal - запрос на эквивалентность
-	Equal(prefixes []string, suffixes []string, matrix [][]bool) (models.EqualResponse, error)
-	// Print - визуализация лабиринта
-	Print() ([]string, error)
+	Equal(eqTable eqtable.EqTable) (models.EqualResponse, error)
+	// Visualize - визуализация лабиринта
+	Visualize() ([]string, error)
 }

@@ -1,8 +1,8 @@
 package maze
 
 import (
-	"container/list"
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/pkg/bmstore"
 
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
@@ -13,20 +13,6 @@ const (
 	outCells = iota + 1
 	inCells
 )
-
-func bitMaskStorerStore(a ...int) int {
-	mask := 0
-
-	for _, i := range a {
-		mask |= 1 << i
-	}
-
-	return mask
-}
-
-func bitMaskStorerCheck(mask, val int) bool {
-	return (mask & (1 << val)) != 0
-}
 
 type LightWallCell struct {
 	leftState  bool
@@ -56,14 +42,14 @@ func (c *LightWallCell) Down() bool {
 }
 
 type ThinWalled struct {
-	Maze   [][]LightWallCell
+	maze   [][]LightWallCell
 	height int
 	width  int
 }
 
 func NewThinWalled(width, height int, maze [][]LightWallCell) *ThinWalled {
 	return &ThinWalled{
-		Maze:   maze,
+		maze:   maze,
 		width:  width,
 		height: height,
 	}
@@ -82,23 +68,6 @@ func vecToLetter(vec models.Vector) byte {
 // особое состояние - любая клетка вне лабиринта и его каймы в одну клетку
 func (w *ThinWalled) IsSpecial(cell models.Cell) bool {
 	return cell.X < -1 || cell.X > w.width || cell.Y < -1 || cell.Y > w.height
-}
-
-// restorePath занимается восстановлением пути от start до end по даннным о предках prev
-func restorePath(start, end models.Cell, prev map[models.Cell]models.Cell) string {
-	path := ""
-
-	cur := end
-	for cur != start {
-		path = string(vecToLetter(models.Vector{
-			X: cur.X - prev[cur].X,
-			Y: cur.Y - prev[cur].Y,
-		})) + path
-
-		cur = prev[cur]
-	}
-
-	return path
 }
 
 func (w *ThinWalled) GetDest(src models.Cell, a byte) models.Cell {
@@ -120,13 +89,13 @@ func (w *ThinWalled) GetDest(src models.Cell, a byte) models.Cell {
 func (w *ThinWalled) canGoFromSrc(src models.Cell, symbol byte) bool {
 	switch symbol {
 	case 'N':
-		return w.Maze[src.Y][src.X].Up()
+		return w.maze[src.Y][src.X].Up()
 	case 'S':
-		return w.Maze[src.Y][src.X].Down()
+		return w.maze[src.Y][src.X].Down()
 	case 'W':
-		return w.Maze[src.Y][src.X].Left()
+		return w.maze[src.Y][src.X].Left()
 	case 'E':
-		return w.Maze[src.Y][src.X].Right()
+		return w.maze[src.Y][src.X].Right()
 	}
 
 	return false
@@ -136,13 +105,13 @@ func (w *ThinWalled) canGoFromSrc(src models.Cell, symbol byte) bool {
 func (w *ThinWalled) canGoToDst(dst models.Cell, symbol byte) bool {
 	switch symbol {
 	case 'N':
-		return w.Maze[dst.Y][dst.X].Down()
+		return w.maze[dst.Y][dst.X].Down()
 	case 'S':
-		return w.Maze[dst.Y][dst.X].Up()
+		return w.maze[dst.Y][dst.X].Up()
 	case 'W':
-		return w.Maze[dst.Y][dst.X].Right()
+		return w.maze[dst.Y][dst.X].Right()
 	case 'E':
-		return w.Maze[dst.Y][dst.X].Left()
+		return w.maze[dst.Y][dst.X].Left()
 	}
 
 	return false
@@ -180,7 +149,7 @@ func (w *ThinWalled) GetPosAfterStep(src models.Cell, a byte) models.Cell {
 }
 
 func (w *ThinWalled) IsOut(cell models.Cell) bool {
-	return cell.Y < 0 || cell.Y >= len(w.Maze) || cell.X < 0 || cell.X >= len(w.Maze[0])
+	return cell.Y < 0 || cell.Y >= len(w.maze) || cell.X < 0 || cell.X >= len(w.maze[0])
 }
 
 // IsBorder является ли клетка "каймой лабиринта"
@@ -189,7 +158,7 @@ func (w *ThinWalled) IsBorder(cell models.Cell) bool {
 }
 
 func (w *ThinWalled) Print() {
-	for _, layer := range w.Maze {
+	for _, layer := range w.maze {
 		rowStr := ""
 
 		for _, cell := range layer {
@@ -217,67 +186,13 @@ func (w *ThinWalled) Print() {
 }
 
 func (w *ThinWalled) DeleteVerticalWall(x1, y1, x2, y2 int) {
-	w.Maze[y1][x1].downState = true
-	w.Maze[y2][x2].upState = true
+	w.maze[y1][x1].downState = true
+	w.maze[y2][x2].upState = true
 }
 
 func (w *ThinWalled) DeleteHorizontalWall(x1, y1, x2, y2 int) {
-	w.Maze[y1][x1].rightState = true
-	w.Maze[y2][x2].leftState = true
-}
-
-func (w *ThinWalled) cellCordsToInt(x, y int) int {
-	return y*len(w.Maze[0]) + x
-}
-
-// bfsOnMaze реализует алгоритм поиска в ширину, возвращает обратно данные о предках для каждой клетки
-func (w *ThinWalled) bfsOnMaze(start, end models.Cell) map[models.Cell]models.Cell {
-	// Up, Down, Left, Right, это важно, иначе сломается isWallInWay
-	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
-
-	queue := list.New()
-	queue.PushBack(start)
-
-	visited := make(map[models.Cell]struct{})
-	visited[start] = struct{}{}
-
-	prev := make(map[models.Cell]models.Cell)
-	prev[start] = start
-
-	for queue.Len() > 0 {
-		current := queue.Front().Value.(models.Cell)
-		queue.Remove(queue.Front())
-
-		if current == end {
-			break
-		}
-
-		for _, dir := range directions {
-			next := models.Cell{
-				X: current.X + dir.X,
-				Y: current.Y + dir.Y,
-			}
-
-			// если можем перейти в клетку и там еще не были
-			if _, vis := visited[next]; w.CanGo(current, next) && !vis {
-				visited[next] = struct{}{}
-
-				queue.PushBack(next)
-				prev[next] = current
-			}
-		}
-	}
-
-	return prev
-}
-
-// GetPath находит путь от start до end
-func (w *ThinWalled) GetPath(start, end models.Cell) string {
-	return restorePath(
-		start,
-		end,
-		w.bfsOnMaze(start, end),
-	)
+	w.maze[y1][x1].rightState = true
+	w.maze[y2][x2].leftState = true
 }
 
 // MakeExit создает выход в (row, col) путем удаления стены
@@ -285,19 +200,19 @@ func (w *ThinWalled) GetPath(start, end models.Cell) string {
 // лишь одну стенку
 func (w *ThinWalled) MakeExit(row, col int) {
 	if row == 0 {
-		w.Maze[row][col].upState = true
+		w.maze[row][col].upState = true
 	}
 
-	if row == len(w.Maze)-1 {
-		w.Maze[row][col].downState = true
+	if row == len(w.maze)-1 {
+		w.maze[row][col].downState = true
 	}
 
 	if col == 0 {
-		w.Maze[row][col].leftState = true
+		w.maze[row][col].leftState = true
 	}
 
-	if col == len(w.Maze[0])-1 {
-		w.Maze[row][col].rightState = true
+	if col == len(w.maze[0])-1 {
+		w.maze[row][col].rightState = true
 	}
 }
 
@@ -336,7 +251,7 @@ func (w *ThinWalled) addTransitions(
 
 // mazeIterator итерируется по лабиринту и для каждой клетки применяет функцию f
 func (w *ThinWalled) mazeIterator(mode int, f func(y, x int)) {
-	if bitMaskStorerCheck(mode, inCells) {
+	if bmstore.Check(mode, inCells) {
 		for i := 0; i < w.height; i++ {
 			for j := 0; j < w.width; j++ {
 				f(i, j)
@@ -344,7 +259,7 @@ func (w *ThinWalled) mazeIterator(mode int, f func(y, x int)) {
 		}
 	}
 
-	if bitMaskStorerCheck(mode, outCells) {
+	if bmstore.Check(mode, outCells) {
 		// добавим сверху
 		j := -1
 		for i := 0; i < w.height; i++ {
@@ -382,7 +297,7 @@ func (w *ThinWalled) getAllStates() map[models.Cell]struct{} {
 	states := make(map[models.Cell]struct{}, 1+w.width+w.height)
 	states[automata.SpecialState()] = struct{}{}
 
-	w.mazeIterator(bitMaskStorerStore(inCells, outCells), func(y, x int) {
+	w.mazeIterator(bmstore.Store(inCells, outCells), func(y, x int) {
 		states[models.Cell{X: x, Y: y}] = struct{}{}
 	})
 
@@ -394,7 +309,7 @@ func (w *ThinWalled) getFinalStates() map[models.Cell]struct{} {
 	finalStates := make(map[models.Cell]struct{})
 	finalStates[automata.SpecialState()] = struct{}{}
 
-	w.mazeIterator(bitMaskStorerStore(outCells), func(y, x int) {
+	w.mazeIterator(bmstore.Store(outCells), func(y, x int) {
 		finalStates[models.Cell{X: x, Y: y}] = struct{}{}
 	})
 
@@ -405,7 +320,7 @@ func (w *ThinWalled) getFinalStates() map[models.Cell]struct{} {
 func (w *ThinWalled) getTransitions() automata.Transitions {
 	transitions := automata.NewTransitions()
 
-	w.mazeIterator(bitMaskStorerStore(inCells, outCells), func(y, x int) {
+	w.mazeIterator(bmstore.Store(inCells, outCells), func(y, x int) {
 		transitions = w.addTransitions(transitions, y, x)
 	})
 

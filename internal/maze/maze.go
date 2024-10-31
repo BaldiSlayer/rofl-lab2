@@ -4,7 +4,7 @@ package maze
 // хорошим тоном будет не завязываться на конкретную :D
 
 /*
-type Maze interface {
+type maze interface {
 
 }
 */

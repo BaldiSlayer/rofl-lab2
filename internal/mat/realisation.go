@@ -10,7 +10,7 @@ import (
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
 
-type Realization struct {
+type Implementation struct {
 	width  int
 	height int
 
@@ -20,8 +20,8 @@ type Realization struct {
 	mazeDFA *automata.DFA
 }
 
-func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Realization {
-	return &Realization{
+func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Implementation {
+	return &Implementation{
 		width:         width,
 		height:        height,
 		mazeGenerator: gen,
@@ -29,7 +29,7 @@ func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Realiz
 }
 
 // walk возвращает позицию после прохождения по лабиринту по пути query
-func (r *Realization) walk(query string) models.Cell {
+func (r *Implementation) walk(query string) models.Cell {
 	start := models.Cell{X: 0, Y: 0}
 
 	for sPos := range query {
@@ -40,90 +40,114 @@ func (r *Realization) walk(query string) models.Cell {
 }
 
 // Include осуществляет проверку запроса на вхождение
-func (r *Realization) Include(query string) (bool, error) {
+func (r *Implementation) Include(query string) (bool, error) {
 	return r.maze.IsOut(r.walk(query)), nil
 }
 
-type reachableResponse struct {
-	allReachable     bool
-	notReachableCell models.Cell
-}
-
-// allCellsAreReachable проверяет, чтобы все клетки лабиринта были достижимы
-func (r *Realization) allCellsAreReachable(prefixes []string) (reachableResponse, error) {
-	// храним информацию о клетках, в которые мы смогли прийти
-	reachableCells := make(map[models.Cell]struct{})
-
-	for _, prefix := range prefixes {
-		cell := r.walk(prefix)
-
-		reachableCells[cell] = struct{}{}
+func (r *Implementation) genCounterForStates(state models.Cell) string {
+	// необходимо вернуть путь от стейта до (-1, -1) и пойти в SpecialState путем выхода из каймы
+	if state == automata.SpecialState() {
+		return r.mazeDFA.GetPath(state, false, true) + "N"
 	}
 
-	for y := 0; y < r.height; y++ {
-		for x := 0; x < r.width; x++ {
-			cell := models.Cell{X: x, Y: y}
-
-			if _, ok := reachableCells[cell]; !ok {
-				return reachableResponse{
-					allReachable:     false,
-					notReachableCell: cell,
-				}, nil
-			}
-		}
-	}
-
-	return reachableResponse{
-		allReachable: true,
-	}, nil
+	// необходимо пройти от старта до выхода через state, для этого
+	// мы найдем путь state->start, перевернем его
+	// и сконкатенируем с state->final
+	return r.mazeDFA.GetPath(state, true, true) +
+		r.mazeDFA.GetPath(state, false, false)
 }
 
-func (r *Realization) Equal(prefixes []string, suffixes []string, matrix [][]bool) (models.EqualResponse, error) {
-	eqTable := eqtable.NewOverMaze(prefixes, suffixes, matrix)
+func (r *Implementation) genCounterForFinalState(state models.Cell) string {
+	// необходимо вернуть путь от стейта до (-1, -1) и пойти в SpecialState путем выхода из каймы
+	if state == automata.SpecialState() {
+		return r.mazeDFA.GetPath(state, false, true) + "N"
+	}
 
-	dfaFromTable := eqTable.ToDFA(r.maze)
+	// пройдем из этого финального состояния до стартового
+	return r.mazeDFA.GetPath(state, true, true)
+}
 
-	// сравниваю состояния
+func (r *Implementation) genCounterForTransition(src automata.Transition, dst models.Cell) string {
+	if dst == automata.SpecialState() {
+		// иду обратно, чтобы не путать лернер и не возвращать ему слишком далекие клетки
+		return r.mazeDFA.GetPath(src.Src, true, true) + string(src.Symbol) +
+			map[byte]string{
+				'N': "S",
+				'S': "N",
+				'W': "E",
+				'E': "W",
+			}[src.Symbol]
+	}
+
+	// идем от старта до src потом делаем переход по нужному символу
+	// затем идем от места, куда перешли до финальной клетки
+	return r.mazeDFA.GetPath(src.Src, true, true) +
+		string(src.Symbol) + r.mazeDFA.GetPath(dst, false, false)
+}
+
+// getNonEqualFinalStatePath ищет контрпример по наличию состояния
+func (r *Implementation) getNonEqualStatePath(dfaFromTable *automata.DFA) string {
 	for mazeState := range r.mazeDFA.States() {
 		if !dfaFromTable.HasState(mazeState) {
-			return models.EqualResponse{
-				Equal: false,
-				CounterExample: models.CounterExample{
-					CounterExample: "d",
-				},
-			}, nil
+			return r.genCounterForStates(mazeState)
 		}
 	}
 
-	// сравниваю финальные состояния
+	return ""
+}
+
+// getNonEqualFinalStatePath ищет контрпример по наличию финального состояния
+func (r *Implementation) getNonEqualFinalStatePath(dfaFromTable *automata.DFA) string {
 	for mazeFinalState := range r.mazeDFA.GetFinalStates() {
 		if !dfaFromTable.HasFinalState(mazeFinalState) {
-			return models.EqualResponse{
-				Equal: false,
-				CounterExample: models.CounterExample{
-					CounterExample: "d",
-				},
-			}, nil
+			return r.genCounterForFinalState(mazeFinalState)
 		}
 	}
 
+	return ""
+}
+
+// getNonEqualTransitions ищет контрпример по переходам
+func (r *Implementation) getNonEqualTransitions(dfaFromTable *automata.DFA) string {
 	mazeTransitions := r.mazeDFA.Transitions()
 
-	// сравнение переходов, фу, слишком много вложенности..
-	// надо пофиксить
 	for src := range mazeTransitions {
-		if mazeTransitions[src] != nil {
-			for letter := range mazeTransitions[src] {
-				if !dfaFromTable.HasTransition(src, letter) {
-					return models.EqualResponse{
-						Equal: false,
-						CounterExample: models.CounterExample{
-							CounterExample: "d",
-						},
-					}, nil
-				}
-			}
+		if !dfaFromTable.HasTransition(src) {
+			return r.genCounterForTransition(src, mazeTransitions[src])
 		}
+	}
+
+	return ""
+}
+
+// getCounterExample ищет контрпример
+func (r *Implementation) getCounterExample(dfaFromTable *automata.DFA) string {
+	counterGens := []func(dfaFromTable *automata.DFA) string{
+		r.getNonEqualStatePath,
+		r.getNonEqualFinalStatePath,
+		r.getNonEqualTransitions,
+	}
+
+	for _, generator := range counterGens {
+		if val := generator(dfaFromTable); val != "" {
+			return val
+		}
+	}
+
+	return ""
+}
+
+func (r *Implementation) Equal(eqTable eqtable.EqTable) (models.EqualResponse, error) {
+	dfaFromTable := eqTable.ToDFA(r.maze)
+
+	counter := r.getCounterExample(dfaFromTable)
+	if counter != "" {
+		return models.EqualResponse{
+			Equal: false,
+			CounterExample: models.CounterExample{
+				CounterExample: counter,
+			},
+		}, nil
 	}
 
 	return models.EqualResponse{
@@ -131,7 +155,7 @@ func (r *Realization) Equal(prefixes []string, suffixes []string, matrix [][]boo
 	}, nil
 }
 
-func (r *Realization) Generate() error {
+func (r *Implementation) Generate() error {
 	var err error
 
 	r.maze, err = r.mazeGenerator.Generate(r.width, r.height)
@@ -141,7 +165,7 @@ func (r *Realization) Generate() error {
 	return err
 }
 
-func (r *Realization) Print() ([]string, error) {
+func (r *Implementation) Visualize() ([]string, error) {
 	if r.maze == nil {
 		return nil, errors.New("failed to print maze: no generated maze")
 	}
@@ -149,8 +173,4 @@ func (r *Realization) Print() ([]string, error) {
 	r.maze.Print()
 
 	return nil, nil
-}
-
-func (r *Realization) tableToDFA(table eqtable.EqTable) *automata.DFA {
-	return table.ToDFA(r.maze)
 }
