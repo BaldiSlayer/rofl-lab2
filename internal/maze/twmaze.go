@@ -3,6 +3,7 @@ package maze
 import (
 	"container/list"
 	"fmt"
+
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
@@ -377,12 +378,12 @@ func (w *ThinWalled) mazeIterator(mode int, f func(y, x int)) {
 }
 
 // getAllStates получает все состояния для ДКА
-func (w *ThinWalled) getAllStates() []models.Cell {
-	states := make([]models.Cell, 0, 1+w.width+w.height)
-	states = append(states, automata.SpecialState())
+func (w *ThinWalled) getAllStates() map[models.Cell]struct{} {
+	states := make(map[models.Cell]struct{}, 1+w.width+w.height)
+	states[automata.SpecialState()] = struct{}{}
 
 	w.mazeIterator(bitMaskStorerStore(inCells, outCells), func(y, x int) {
-		states = append(states, models.Cell{X: x, Y: y})
+		states[models.Cell{X: x, Y: y}] = struct{}{}
 	})
 
 	return states

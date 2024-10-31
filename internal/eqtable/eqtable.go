@@ -2,7 +2,6 @@ package eqtable
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
-	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
@@ -19,6 +18,14 @@ type OverMaze struct {
 	answers [][]bool
 }
 
+func NewOverMaze(prefixes []string, suffixes []string, answers [][]bool) *OverMaze {
+	return &OverMaze{
+		prefixes: prefixes,
+		suffixes: suffixes,
+		answers:  answers,
+	}
+}
+
 // GetWords -
 func (table *OverMaze) getWords() map[string]bool {
 	mp := make(map[string]bool)
@@ -32,10 +39,12 @@ func (table *OverMaze) getWords() map[string]bool {
 	return mp
 }
 
-func (table *OverMaze) wordIterate(startState models.Cell, word string, maze *maze.ThinWalled) models.Cell {
-	transitions := automata.NewTransitions()
-
-	states := make(map[models.Cell]struct{})
+func (table *OverMaze) wordIterate(
+	startState models.Cell,
+	word string,
+	maze *maze.ThinWalled,
+	aut *automata.DFA,
+) models.Cell {
 	curState := startState
 
 	for _, letter := range word {
@@ -55,7 +64,7 @@ func (table *OverMaze) wordIterate(startState models.Cell, word string, maze *ma
 
 		// если не можем пойти, то оставляем тот же стейт и добавляем петлю
 		if !canGo {
-			transitions.Add(curState, nextState, byte(letter))
+			aut.AddTransition(curState, nextState, byte(letter))
 
 			continue
 		}
@@ -65,11 +74,10 @@ func (table *OverMaze) wordIterate(startState models.Cell, word string, maze *ma
 			nextState = automata.SpecialState()
 		}
 
-		transitions.Add(curState, nextState, byte(letter))
+		aut.AddTransition(curState, nextState, byte(letter))
+		aut.AddState(nextState)
 
-		states[nextState] = struct{}{}
-
-		// передвинулись
+		// передвигаемся
 		curState = nextState
 	}
 
@@ -79,29 +87,18 @@ func (table *OverMaze) wordIterate(startState models.Cell, word string, maze *ma
 func (table *OverMaze) ToDFA(maze *maze.ThinWalled) *automata.DFA {
 	startState := models.Cell{X: 0, Y: 0}
 
-	// инициализация финальных состояний
-	finalStates := make(map[models.Cell]struct{})
-	// инициализация переходов
-	transitions := automata.NewTransitions()
-	// инициализация
-	states := make([]models.Cell, 0)
+	aut := automata.NewEmptyDFA()
 
 	// обходим полученную таблицу
 	for word, included := range table.getWords() {
 		// стоим в начале
-		stateAfterWalk := table.wordIterate(startState, word, maze)
+		stateAfterWalk := table.wordIterate(startState, word, maze, aut)
 
 		// если на пересечении стояла единичка, добавляем в финальные состояния
 		if included {
-			finalStates[stateAfterWalk] = struct{}{}
+			aut.AddFinalState(stateAfterWalk)
 		}
 	}
 
-	return automata.NewDFA(
-		startState,
-		finalStates,
-		defaults.GetAlphabet(),
-		transitions,
-		states,
-	)
+	return aut
 }

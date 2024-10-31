@@ -1,8 +1,7 @@
 package automata
 
 import (
-	"fmt"
-
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
 
@@ -34,6 +33,18 @@ func (t *Transitions) Add(src, dst models.Cell, symbol byte) {
 	t.ts[src][symbol] = dst
 }
 
+func (t *Transitions) Has(src models.Cell, symbol byte) bool {
+	srcTs := t.ts[src]
+
+	if srcTs == nil {
+		return false
+	}
+
+	_, ok := srcTs[symbol]
+
+	return ok
+}
+
 // DFA - детерминированный конечный автомат
 type DFA struct {
 	startState  models.Cell
@@ -41,7 +52,17 @@ type DFA struct {
 	alphabet    []byte
 	// [откуда][по_символу]куда_пришли
 	transitions Transitions
-	states      []models.Cell
+	states      map[models.Cell]struct{}
+}
+
+func NewEmptyDFA() *DFA {
+	return &DFA{
+		startState:  models.Cell{X: 0, Y: 0},
+		finalStates: make(map[models.Cell]struct{}),
+		alphabet:    defaults.GetAlphabet(),
+		transitions: NewTransitions(),
+		states:      make(map[models.Cell]struct{}),
+	}
 }
 
 func NewDFA(
@@ -49,7 +70,7 @@ func NewDFA(
 	finalStates map[models.Cell]struct{},
 	alphabet []byte,
 	transitions Transitions,
-	states []models.Cell,
+	states map[models.Cell]struct{},
 ) *DFA {
 	return &DFA{
 		startState:  startState,
@@ -60,29 +81,46 @@ func NewDFA(
 	}
 }
 
-func (dfa *DFA) GenerateDot() string {
-	dot := "digraph DFA {\n"
-	dot += "    rankdir=LR;\n"
-
-	// Определение начального состояния
-	dot += fmt.Sprintf("    start [label=\"Start\\n(начальное состояние)\", shape=doublecircle];\n")
-
-	// Определение финальных состояний
-	for state := range dfa.finalStates {
-		dot += fmt.Sprintf("    final_%d_%d [label=\"Final\\n(финальное состояние)\", shape=doublecircle];\n", state.X, state.Y)
-	}
-
-	// Переходы между состояниями
-	for _, symbols := range dfa.transitions.ts {
-		for symbol, dst := range symbols {
-			dot += fmt.Sprintf("    start -> final_%d_%d [label=\"%s\"];\n", dst.X, dst.Y, string(symbol))
-		}
-	}
-
-	dot += "}\n"
-	return dot
+func (dfa *DFA) States() map[models.Cell]struct{} {
+	return dfa.states
 }
 
-func (dfa *DFA) GetTransitions() Transitions {
-	return dfa.transitions
+func (dfa *DFA) GetFinalStates() map[models.Cell]struct{} {
+	return dfa.finalStates
+}
+
+func (dfa *DFA) Transitions() map[models.Cell]map[byte]models.Cell {
+	return dfa.transitions.ts
+}
+
+func (dfa *DFA) HasState(state models.Cell) bool {
+	_, ok := dfa.states[state]
+
+	return ok
+}
+
+func (dfa *DFA) HasFinalState(state models.Cell) bool {
+	_, ok := dfa.finalStates[state]
+
+	return ok
+}
+
+func (dfa *DFA) HasTransition(src models.Cell, symbol byte) bool {
+	return dfa.transitions.Has(src, symbol)
+}
+
+func (dfa *DFA) AddState(state models.Cell) {
+	dfa.states[state] = struct{}{}
+}
+
+func (dfa *DFA) AddTransition(src, dst models.Cell, symbol byte) {
+	if _, ok := dfa.transitions.ts[src]; !ok {
+		dfa.transitions.ts[src] = make(map[byte]models.Cell)
+	}
+
+	dfa.transitions.ts[src][symbol] = dst
+}
+
+func (dfa *DFA) AddFinalState(state models.Cell) {
+	dfa.finalStates[state] = struct{}{}
 }

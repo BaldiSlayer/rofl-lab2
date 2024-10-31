@@ -2,10 +2,9 @@ package mat
 
 import (
 	"errors"
-	"fmt"
-	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
@@ -80,27 +79,56 @@ func (r *Realization) allCellsAreReachable(prefixes []string) (reachableResponse
 }
 
 func (r *Realization) Equal(prefixes []string, suffixes []string, matrix [][]bool) (models.EqualResponse, error) {
-	// сначала проверяем, что по префиксам мы доходим до всех клеток
-	allReachableResult, err := r.allCellsAreReachable(prefixes)
-	if err != nil {
-		return models.EqualResponse{}, fmt.Errorf("failed to check cells achievability: %w", err)
+	eqTable := eqtable.NewOverMaze(prefixes, suffixes, matrix)
+
+	dfaFromTable := eqTable.ToDFA(r.maze)
+
+	// сравниваю состояния
+	for mazeState := range r.mazeDFA.States() {
+		if !dfaFromTable.HasState(mazeState) {
+			return models.EqualResponse{
+				Equal: false,
+				CounterExample: models.CounterExample{
+					CounterExample: "d",
+				},
+			}, nil
+		}
 	}
 
-	if !allReachableResult.allReachable {
-		// теперь нужно найти путь от непосещенной клетки до старта и от нее же до выхода
-		// сконкатенировать два этих пути, это и будет контрпримером
-
-		return models.EqualResponse{
-			Equal: false,
-			CounterExample: models.CounterExample{
-				CounterExample: "",
-			},
-		}, nil
+	// сравниваю финальные состояния
+	for mazeFinalState := range r.mazeDFA.GetFinalStates() {
+		if !dfaFromTable.HasFinalState(mazeFinalState) {
+			return models.EqualResponse{
+				Equal: false,
+				CounterExample: models.CounterExample{
+					CounterExample: "d",
+				},
+			}, nil
+		}
 	}
 
-	// потом строим ДКА и проводим проверки уже с ним
+	mazeTransitions := r.mazeDFA.Transitions()
 
-	return models.EqualResponse{}, nil
+	// сравнение переходов, фу, слишком много вложенности..
+	// надо пофиксить
+	for src := range mazeTransitions {
+		if mazeTransitions[src] != nil {
+			for letter := range mazeTransitions[src] {
+				if !dfaFromTable.HasTransition(src, letter) {
+					return models.EqualResponse{
+						Equal: false,
+						CounterExample: models.CounterExample{
+							CounterExample: "d",
+						},
+					}, nil
+				}
+			}
+		}
+	}
+
+	return models.EqualResponse{
+		Equal: true,
+	}, nil
 }
 
 func (r *Realization) Generate() error {
@@ -109,8 +137,6 @@ func (r *Realization) Generate() error {
 	r.maze, err = r.mazeGenerator.Generate(r.width, r.height)
 
 	r.mazeDFA = r.maze.ToDFA()
-
-	fmt.Println(r.mazeDFA.GenerateDot())
 
 	return err
 }
