@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	width  = 1
-	height = 1
+	width  = 2
+	height = 2
 )
 
 func main() {

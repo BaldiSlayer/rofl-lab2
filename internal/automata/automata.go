@@ -251,7 +251,7 @@ func (dfa *DFA) Include(query string, isSpecial func(cell models.Cell) bool) boo
 		nonDKAState = curState
 		curState = dfa.Transitions()[Transition{Src: curState, Symbol: byte(letter)}]
 		if curState == SpecialState() {
-			nonDKAState = models.Cell{X: curState.X + vec.X, Y: curState.Y + vec.Y}
+			nonDKAState = models.Cell{X: nonDKAState.X + vec.X, Y: nonDKAState.Y + vec.Y}
 		}
 	}
 
