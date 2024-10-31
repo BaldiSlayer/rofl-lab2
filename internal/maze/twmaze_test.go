@@ -1,7 +1,8 @@
 package maze
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/models"
+	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -163,4 +164,26 @@ func TestThinWalled_GetPath(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestThinWalled_mazeIterator(t *testing.T) {
+	r := ThinWalled{height: 2, width: 2}
+	visited := make(map[string]bool)
+
+	f := func(y, x int) {
+		visited[fmt.Sprintf("%d,%d", y, x)] = true
+	}
+
+	r.mazeIterator(bitMaskStorerStore(outCells), f)
+	require.Equal(t, 12, len(visited))
+
+	visited = make(map[string]bool)
+
+	r.mazeIterator(bitMaskStorerStore(inCells), f)
+	require.Equal(t, 4, len(visited))
+
+	visited = make(map[string]bool)
+
+	r.mazeIterator(bitMaskStorerStore(inCells, outCells), f)
+	require.Equal(t, 16, len(visited))
 }

@@ -1,6 +1,8 @@
 package mat
 
-import "github.com/BaldiSlayer/rofl-lab2/internal/models"
+import (
+	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
+)
 
 type MAT interface {
 	// Generate - генерация лабиринта

@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
-	"github.com/BaldiSlayer/rofl-lab2/internal/models"
+	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
 
 type Realization struct {
@@ -122,10 +123,10 @@ func (r *Realization) Print() ([]string, error) {
 }
 
 func (r *Realization) tableToDFA() *automata.DFA {
-	alphabet := []string{"N", "S", "W", "E"}
+	alphabet := defaults.GetAlphabet()
 	_ = alphabet
 
-	directions := []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
+	directions := defaults.GetDirections()
 	_ = directions
 
 	startState := models.Cell{X: 0, Y: 0}

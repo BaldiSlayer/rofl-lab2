@@ -1,24 +1,26 @@
 package automata
 
-import "github.com/BaldiSlayer/rofl-lab2/internal/models"
+import (
+	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
+)
 
 func SpecialState() models.Cell {
 	return models.Cell{X: -228, Y: -228}
 }
 
 type Transitions struct {
-	ts map[models.Cell]map[string]models.Cell
+	ts map[models.Cell]map[byte]models.Cell
 }
 
 func NewTransitions() Transitions {
 	return Transitions{
-		ts: make(map[models.Cell]map[string]models.Cell),
+		ts: make(map[models.Cell]map[byte]models.Cell),
 	}
 }
 
-func (t *Transitions) Add(src, dst models.Cell, symbol string) {
+func (t *Transitions) Add(src, dst models.Cell, symbol byte) {
 	if _, ok := t.ts[src]; !ok {
-		t.ts[src] = make(map[string]models.Cell)
+		t.ts[src] = make(map[byte]models.Cell)
 	}
 
 	t.ts[src][symbol] = dst
@@ -28,7 +30,7 @@ func (t *Transitions) Add(src, dst models.Cell, symbol string) {
 type DFA struct {
 	startState  models.Cell
 	finalStates map[models.Cell]struct{}
-	alphabet    []string
+	alphabet    []byte
 	// [откуда][по_символу]куда_пришли
 	transitions Transitions
 	states      []models.Cell
@@ -37,7 +39,7 @@ type DFA struct {
 func NewDFA(
 	startState models.Cell,
 	finalStates map[models.Cell]struct{},
-	alphabet []string,
+	alphabet []byte,
 	transitions Transitions,
 	states []models.Cell,
 ) *DFA {

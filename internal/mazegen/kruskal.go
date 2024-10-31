@@ -1,8 +1,8 @@
 package mazegen
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/dsu"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
+	"github.com/BaldiSlayer/rofl-lab2/pkg/dsu"
 	"math/rand"
 	"time"
 )
@@ -25,13 +25,19 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 		mazeField,
 	)
 
-	// TODO можно предвыделить, мне сейчас лень умножать
-	walls := make([]maze.Wall, 0)
+	type wall struct {
+		X1 int
+		X2 int
+		Y1 int
+		Y2 int
+	}
+
+	walls := make([]wall, 0, height*width)
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			if x < width-1 {
-				walls = append(walls, maze.Wall{
+				walls = append(walls, wall{
 					X1: x,
 					Y1: y,
 					X2: x + 1,
@@ -40,7 +46,7 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 			}
 
 			if y < height-1 {
-				walls = append(walls, maze.Wall{
+				walls = append(walls, wall{
 					X1: x,
 					Y1: y,
 					X2: x,
@@ -91,6 +97,7 @@ func (l *LightWallsGenerator) Generate(width, height int) (*maze.ThinWalled, err
 		}
 	}
 
+	// делаю 4 выхода в рандомных местах
 	generatedMaze.MakeExit(0, rand.Intn(width))
 	generatedMaze.MakeExit(height-1, rand.Intn(width))
 

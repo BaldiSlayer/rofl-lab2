@@ -127,6 +127,8 @@ func (lab2 *Lab2) cli() {
 					if err != nil {
 						slog.Error("error while do action", "error", err)
 					}
+
+					break
 				}
 			}
 		}
