@@ -3,12 +3,10 @@ package app
 import (
 	"bufio"
 	"fmt"
-	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mat"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
 	"log/slog"
 	"os"
-	"strings"
 )
 
 type Lab2 struct {
@@ -27,117 +25,79 @@ func NewLab2(width, height int) *Lab2 {
 	}
 }
 
-type Handler struct {
-	Checker func(s string) bool
-	Action  func(s string) error
+func readInclude(ch chan string) string {
+	return <-ch
 }
 
-func (lab2 *Lab2) addCliHandlers() []Handler {
-	cmdGen := Handler{
-		Checker: func(s string) bool {
-			return s == "g"
-		},
-		Action: func(s string) error {
+func readTable(ch chan string) []string {
+	tableLines := make([]string, 0)
+
+	for message := range ch {
+		if message == "end" {
+			break
+		}
+
+		tableLines = append(tableLines, message)
+	}
+
+	return tableLines
+}
+
+func (lab2 *Lab2) processCommands(ch chan string) {
+	for message := range ch {
+		if message == "g" {
 			err := lab2.teacher.Generate()
 			if err != nil {
-				return err
+				slog.Error("failed to generate", "error", err)
 			}
+		}
 
-			return nil
-		},
-	}
-
-	cmdPrint := Handler{
-		Checker: func(s string) bool {
-			return s == "p"
-		},
-		Action: func(s string) error {
-			maze, err := lab2.teacher.Visualize()
+		if message == "p" {
+			visualize, err := lab2.teacher.Visualize()
 			if err != nil {
-				return err
+				slog.Error("failed to visualize", "error", err)
 			}
 
-			for _, line := range maze {
+			for _, line := range visualize {
 				fmt.Println(line)
 			}
+		}
 
-			return nil
-		},
-	}
+		if message == "isin" {
+			query := readInclude(ch)
 
-	cmdInclude := Handler{
-		Checker: func(s string) bool {
-			return strings.HasPrefix(s, "i ")
-		},
-		Action: func(s string) error {
-			res, err := lab2.teacher.Include(s[2:])
-			if err != nil {
-				return err
+			answer, _ := lab2.teacher.Include(query)
+			if answer {
+				fmt.Println("True")
+			} else {
+				fmt.Println("False")
 			}
+		}
 
-			if res {
-				fmt.Println(1)
+		if message == "table" {
+			readedTable := readTable(ch)
 
-				return nil
-			}
-
-			fmt.Println(0)
-
-			return nil
-		},
-	}
-
-	cmdEqual := Handler{
-		Checker: func(s string) bool {
-			return strings.HasPrefix(s, "e ")
-		},
-		Action: func(s string) error {
-			_ = s[2:]
-
-			eqTable := eqtable.NewOverMaze(nil, nil, nil)
-
-			res, err := lab2.teacher.Equal(eqTable)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(res)
-
-			return nil
-		},
-	}
-
-	return []Handler{
-		cmdGen,
-		cmdPrint,
-		cmdInclude,
-		cmdEqual,
+			fmt.Println(readedTable)
+		}
 	}
 }
 
 func (lab2 *Lab2) cli() {
-	commands := lab2.addCliHandlers()
-
 	scanner := bufio.NewScanner(os.Stdin)
+
+	ch := make(chan string)
+
+	go func(ch chan string) {
+		lab2.processCommands(ch)
+	}(ch)
 
 	for {
 		if scanner.Scan() {
-			command := scanner.Text()
-
-			for _, cmd := range commands {
-				if cmd.Checker(command) {
-					err := cmd.Action(command)
-					if err != nil {
-						slog.Error("error while do action", "error", err)
-					}
-
-					break
-				}
-			}
+			ch <- scanner.Text()
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading input:", err)
+			fmt.Fprintln(os.Stderr, "error reading input:", err)
 
 			break
 		}
