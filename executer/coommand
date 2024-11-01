@@ -1,1 +1,1 @@
-./executer.py "python3 ./tfl-lab2/main.py" ./Solver
+./executer.py "python3 ../../tfl-lab2/main.py" ./Solver
