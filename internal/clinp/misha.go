@@ -30,7 +30,7 @@ func readTable(ch chan string) []string {
 }
 
 func splitTableToParts(table []string) eqtable.TableParts {
-	prefixes := make([]string, 0)
+	prefixes := make([]string, 0, len(table))
 
 	for _, str := range table {
 		// берем из каждой строки первый
@@ -57,7 +57,7 @@ func splitTableToParts(table []string) eqtable.TableParts {
 		suffixes = append(suffixes, suf)
 	}
 
-	answers := make([][]bool, 0)
+	answers := make([][]bool, 0, len(table)-1)
 
 	for _, str := range table[1:] {
 		newAnsString := make([]bool, 0)
