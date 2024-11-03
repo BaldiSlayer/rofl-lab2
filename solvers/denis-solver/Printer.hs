@@ -21,7 +21,7 @@ maxLenString (x:xs) = max (length x) (maxLenString xs)
 
 {-Генерирует первую строку вывода-}
 firstLine :: Int -> [String] -> String
-firstLine n names = (replicate n ' ') ++ "|" ++ (printNames names) ++ "\n"
+firstLine n names = (printNames names) ++ "\n"
     where
         printNames [] = ""
         printNames (x:xs) = " "++(checkEpsilon x)++ (printNames xs)
@@ -31,7 +31,7 @@ separator :: Int -> String
 separator n = replicate (n+10) '-'
 
 checkEpsilon :: String -> String
-checkEpsilon str | str == "" = "epsilon"
+checkEpsilon str | str == "" = "e"
                  | otherwise = str
 
 {-Выводит саму таблицу-}
@@ -39,7 +39,7 @@ printLines :: [([Bool], String)] -> String
 printLines a = printLinesList a
     where
         printLinesList [] = ""
-        printLinesList ((key, str):xs) = (checkEpsilon str) ++"|"++ ({-boolToNumStr (last key)-}toString key) ++ "\n" ++ (printLinesList xs)
+        printLinesList ((key, str):xs) = (checkEpsilon str) ++ " " ++ ({-boolToNumStr (last key)-}toString key) ++ "\n" ++ (printLinesList xs)
         boolToNumStr x | x = "1"
                     | otherwise = "0"
         toString [] = ""
@@ -51,4 +51,4 @@ generateStringOfTable a = let
        table = prefixesAndColumns a
        names = suffixes a
        columnlen = maxLenString $ "epsilon":(elems table) 
-    in (firstLine columnlen names) ++ (separator columnlen) ++ "\n" ++(printLines table)
+    in (firstLine columnlen names) ++ (printLines table)
