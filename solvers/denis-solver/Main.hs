@@ -11,14 +11,16 @@ import System.IO (hFlush, stdout)
 Этот файл организует интерфейс, позволяющий итеративно проводить вычисление классов эквивалентности
 -}
 
-sendTable :: String -> IO()
-sendTable msg = do
-    putStrLn msg
+sendTable :: Automat -> IO()
+sendTable a = do
+    putStrLn "table"
+    putStr $ generateStringOfTable a
+    putStrLn "end" 
     hFlush stdout
 
 checkAutomat :: Automat -> IO(Bool, String)
 checkAutomat a = do
-    sendTable $ generateStringOfTable a
+    sendTable a
     str <- getLine
     if str == "TRUE"
         then return (True, "")

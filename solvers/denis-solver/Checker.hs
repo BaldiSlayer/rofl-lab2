@@ -5,6 +5,7 @@ import System.IO (hFlush, stdout)
 {-Делает запрос к MAT(или пользователь) на получение данных о вхождение в язык-}
 isInLanguage :: String -> IO Bool
 isInLanguage str = do
+            putStrLn "isin"
             putStrLn str
             hFlush stdout
             res <- getLine
