@@ -24,9 +24,12 @@ filterOut a (x:xs) = do
         then return r2
         else return (x:r2)
     where
-    isOut auto (bs, str) = do 
-        (_, res) <- listisInLanguageCheck auto ["", "S", "W", "N", "E"] str
-        return (res  == [True, True, True, True, True]) 
+    isOut auto (bs, str) = do
+        if str == ""
+            then return False
+            else do
+                (_, res) <- listisInLanguageCheck auto ["", "S", "W", "N", "E"] str
+                return (res  == [True, True, True, True, True]) 
 
 -- Мемоизированная версия функции
 generateMaplistFromListCheck :: Automat -> [String] -> [String] -> IO (Automat, [([Bool], String)])
@@ -42,7 +45,7 @@ generateAutomat ::(Int, Int) -> String -> IO Automat
 generateAutomat size str = do
                 (a, mapa) <- generateMaplistFromListCheck (emptyAutomat size) prefList suffList
                 mapa1 <- filterOut a mapa
-                return $ (Automat (unqPairList mapa) suffList (knownResults a) size)
+                return $ (Automat (unqPairList mapa1) suffList (knownResults a) size)
                     where 
                         prefList = expandList $ generatePrefixes str
                         suffList = ["","E","N","S","W"]

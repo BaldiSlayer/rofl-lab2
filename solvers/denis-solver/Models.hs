@@ -16,17 +16,17 @@ lookupMap ((x,y):xs) k | k == x = Just y
                     | k < x = Nothing
                     | otherwise = lookupMap xs k
 
-insert :: (Ord k) => (k,a) -> [(k,a)] -> [(k,a)]
+insert :: (Ord k, Ord a) => (k,a) -> [(k,a)] -> [(k,a)]
 insert x [] = [x]
 insert (x, y) ((d,f):xs) | x > d  = (d,f) : (insert (x,y) xs)
-                         | x == d = ((d,f):xs)
+                         | x == d = ((d,(min y f)):xs)
                          | otherwise = (x,y):(d,f):xs
 
-insertList :: (Ord k) => [(k,a)] -> [(k,a)] -> [(k,a)]
+insertList :: (Ord k, Ord a) => [(k,a)] -> [(k,a)] -> [(k,a)]
 insertList [] xs = xs
 insertList ((x,y):ys) xs = ys `insertList` ((x,y) `insert` xs)
 
-unqPairList :: (Ord k) => [(k, a)] -> [(k, a)]
+unqPairList :: (Ord k, Ord a) => [(k, a)] -> [(k, a)]
 unqPairList arr = arr `insertList` [] 
 
 ----------------------------------------------
@@ -43,13 +43,18 @@ emptyAutomat (x,y) = Automat [] [] [] (x,y)
 --------------------------------------------------------------------------------
 
 -- Конкатенация списков с обеспечением уникальности элементов(второй список должен быть гарантировано отсортирован)
-unqConcat :: (Ord a) => [a] -> [a] -> [a]
+unqConcat :: [String] -> [String] -> [String]
 unqConcat [] xs = xs
 unqConcat (y:ys) xs = y `unqAppend` (ys `unqConcat` xs)  
 
-unqAppend :: (Ord a) =>  a -> [a] -> [a]
+unqCompare :: String -> String -> Bool
+unqCompare x y | (length x) > (length y) = True
+               | (length x) == (length y) = x > y
+               | otherwise = False
+
+unqAppend :: String -> [String] -> [String]
 unqAppend x [] = [x]
-unqAppend x (y:ys) | x > y = y : (unqAppend x ys)
+unqAppend x (y:ys) | x `unqCompare` y = y : (unqAppend x ys)
                    | x == y = y : ys
                    | otherwise = x : y : ys  
 ---------------------------------------------------------------------------------
