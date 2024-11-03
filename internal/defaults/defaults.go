@@ -17,5 +17,5 @@ func GetDirections() []models.Vector {
 }
 
 const (
-	epsilonSymbol = "e"
+	EpsilonSymbol = "e"
 )

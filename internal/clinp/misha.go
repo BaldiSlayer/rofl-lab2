@@ -2,8 +2,11 @@ package clinp
 
 import (
 	"fmt"
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
+	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mat"
 	"log/slog"
+	"strings"
 )
 
 type Misha struct{}
@@ -24,6 +27,57 @@ func readTable(ch chan string) []string {
 	}
 
 	return tableLines
+}
+
+func splitTableToParts(table []string) eqtable.TableParts {
+	prefixes := make([]string, 0)
+
+	for _, str := range table {
+		// берем из каждой строки первый
+		first := strings.Split(str, " ")[0]
+
+		if first == defaults.EpsilonSymbol {
+			prefixes = append(prefixes, "")
+
+			continue
+		}
+
+		prefixes = append(prefixes, first)
+	}
+
+	suffixes := make([]string, 0)
+
+	for _, suf := range strings.Split(table[0], " ") {
+		if suf == defaults.EpsilonSymbol {
+			suffixes = append(suffixes, "")
+
+			continue
+		}
+
+		suffixes = append(suffixes, suf)
+	}
+
+	answers := make([][]bool, 0)
+
+	for _, str := range table[1:] {
+		newAnsString := make([]bool, 0)
+
+		for _, val := range strings.Split(str, " ")[1:] {
+			if val == "0" {
+				newAnsString = append(newAnsString, false)
+			} else {
+				newAnsString = append(newAnsString, true)
+			}
+		}
+
+		answers = append(answers, newAnsString)
+	}
+
+	return eqtable.TableParts{
+		Prefixes: prefixes,
+		Suffixes: suffixes,
+		Answers:  answers,
+	}
 }
 
 func (m *Misha) ProcessCommands(teacher mat.MAT, commandsChan chan string) {
@@ -60,7 +114,20 @@ func (m *Misha) ProcessCommands(teacher mat.MAT, commandsChan chan string) {
 		if message == "table" {
 			table := readTable(commandsChan)
 
-			fmt.Println(table)
+			tableParts := splitTableToParts(table)
+
+			eqTable := eqtable.NewOverMaze(tableParts)
+
+			equal, err := teacher.Equal(eqTable)
+			if err != nil {
+				slog.Error("failed to check equality", "error", err)
+			}
+
+			if equal.Equal {
+				fmt.Println("TRUE")
+			} else {
+				fmt.Println(equal.CounterExample.CounterExample)
+			}
 		}
 	}
 }
