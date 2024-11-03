@@ -27,14 +27,23 @@ checkAutomat a = do
         else return (False, str)
 
 
+loop1 :: Automat -> IO()
+loop1 a = do
+    (res, contr) <- checkAutomat a
+    if res 
+        then putStrLn "Succes"
+        else do
+            newauto <- addSufToAutomat a contr
+            loop newauto    
+
 loop :: Automat -> IO()
 loop a = do
     (res, contr) <- checkAutomat a
     if res 
         then putStrLn "Succes"
         else do
-            newauto <- addStringToAutomat a contr
-            loop newauto    
+            newauto <- addPrefToAutomat a contr
+            loop1 newauto    
 
 main :: IO()
 main = do
