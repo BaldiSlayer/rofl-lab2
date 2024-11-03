@@ -1,15 +1,18 @@
 #!/usr/bin/python3
 
-import sys
+import sys, os
 import subprocess as sp
+import select
 
-
+def readLen(pipe):
+    return os.fstat(pipe.fileno()).st_size
 
 def runSolve(MATpath, solverpath):
-    MAT = sp.Popen(MATpath, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sp.PIPE,text=True, bufsize=1)
-    solver = sp.Popen(solverpath, stdout=MAT.stdin, stdin=MAT.stdout, stderr=sp.PIPE, text=True, bufsize=1)
+    solver = sp.Popen(solverpath, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sp.PIPE, text=True, bufsize=1)
+    MAT = sp.Popen(MATpath, stdout=solver.stdin, stdin=solver.stdout, stderr=sp.PIPE,text=True, bufsize=1)
+
     try:
-        MAT.wait()
+        solver.wait()
     except:
         for line in solver.stderr:
             print("Solver-err: "+line, end="")
