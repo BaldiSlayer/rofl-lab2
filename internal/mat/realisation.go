@@ -21,7 +21,7 @@ type Implementation struct {
 	mazeDFA *automata.DFA
 }
 
-func NewRealization(gen *mazegen.LightWallsGenerator, width, height int) *Implementation {
+func NewImplementation(gen *mazegen.LightWallsGenerator, width, height int) *Implementation {
 	return &Implementation{
 		width:         width,
 		height:        height,

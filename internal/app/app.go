@@ -19,7 +19,7 @@ type Lab2 struct {
 
 func NewLab2(width, height int) *Lab2 {
 	return &Lab2{
-		teacher: mat.NewRealization(
+		teacher: mat.NewImplementation(
 			mazegen.NewLightWallsGenerator(),
 			width,
 			height,
