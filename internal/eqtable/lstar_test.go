@@ -12,12 +12,55 @@ func TestLStar_ToDFA(t *testing.T) {
 		prefixes []string
 		suffixes []string
 		answers  []string
+		alphabet []byte
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		want   *wautomata.DFA
 	}{
+		{
+			name: "small",
+			fields: fields{
+				prefixes: []string{
+					"",
+					"b",
+					"a",
+					"ba",
+					"bb",
+				},
+				suffixes: []string{
+					"",
+				},
+				answers: []string{
+					"-",
+					"+",
+					"-",
+					"-",
+					"-",
+				},
+				alphabet: []byte{'a', 'b'},
+			},
+			want: wautomata.New(
+				"",
+				map[string]struct{}{
+					"b": {},
+				},
+				defaults.GetAlphabet(),
+				wautomata.NewTransitions(
+					map[wautomata.Transition]string{
+						wautomata.Transition{Src: "", Symbol: 'a'}:  "",
+						wautomata.Transition{Src: "", Symbol: 'b'}:  "b",
+						wautomata.Transition{Src: "b", Symbol: 'a'}: "",
+						wautomata.Transition{Src: "b", Symbol: 'b'}: "",
+					},
+				),
+				map[string]struct{}{
+					"b": {},
+					"":  {},
+				},
+			),
+		},
 		{
 			name: "from consult",
 			fields: fields{
@@ -53,6 +96,7 @@ func TestLStar_ToDFA(t *testing.T) {
 					"----",
 					"----",
 				},
+				alphabet: []byte{'a', 'b'},
 			},
 			want: wautomata.New(
 				"",
@@ -87,7 +131,7 @@ func TestLStar_ToDFA(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			alphabet = []byte{'a', 'b'}
+			alphabet = tt.fields.alphabet
 
 			lstar := &LStar{
 				prefixes: tt.fields.prefixes,
