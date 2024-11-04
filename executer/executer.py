@@ -9,7 +9,7 @@ def readLen(pipe):
 
 def runSolve(MATpath, solverpath):
     solver = sp.Popen(solverpath, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sp.PIPE, text=True, bufsize=1)
-    MAT = sp.Popen(MATpath, stdout=solver.stdin, stdin=solver.stdout, stderr=sp.PIPE,text=True, bufsize=1)
+    MAT = sp.Popen(MATpath, stdout=solver.stdin, stdin=solver.stdout, stderr=sys.stdout,text=True, bufsize=1)
 
     try:
         solver.wait()

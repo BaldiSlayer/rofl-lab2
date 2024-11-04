@@ -11,16 +11,16 @@ import System.IO (hFlush, stdout)
 Этот файл организует интерфейс, позволяющий итеративно проводить вычисление классов эквивалентности
 -}
 
-sendTable :: Automat -> IO()
-sendTable a = do
+sendTable :: String -> IO()
+sendTable str = do
     putStrLn "table"
-    putStr $ generateStringOfTable a
+    putStr str
     putStrLn "end" 
     hFlush stdout
 
 checkAutomat :: Automat -> IO(Bool, String)
 checkAutomat a = do
-    sendTable a
+    sendTable $ generateStringOfTable a
     str <- getLine
     if str == "TRUE"
         then return (True, "")
@@ -33,7 +33,7 @@ loop1 a = do
     if res 
         then putStrLn "Succes"
         else do
-            newauto <- addSufToAutomat a contr
+            newauto <- addStringToAutomat a contr
             loop newauto    
 
 loop :: Automat -> IO()
@@ -42,18 +42,25 @@ loop a = do
     if res 
         then putStrLn "Succes"
         else do
-            newauto <- addPrefToAutomat a contr
-            loop1 newauto    
+            newauto <- addStringToAutomat a contr
+            loop newauto    
 
 main :: IO()
 main = do
     (x,y) <- readFromFile "./parameters.txt"
-    auto <- generateAutomat (x,y) ""
-    loop auto
+    --putStrLn $ show (x,y)
+    sendTable "e\ne 0\n"
+    str <- getLine
+    auto <- addStringToAutomat (emptyAutomat (x,y)) str
+    auto1 <- addBorder auto str 
+    loop auto1
 
 check :: IO()
 check = do
     (x,y) <- readFromFile "./parameters.txt"
-    auto <- generateAutomat (x,y) ""
-    putStrLn $ generateStringOfTable auto
+    sendTable "e\ne 0\n"
+    str <- getLine
+    auto <- addStringToAutomat (emptyAutomat (x,y)) str
+    auto1 <- addBorder auto str 
+    putStrLn $ generateStringOfTable auto1
 

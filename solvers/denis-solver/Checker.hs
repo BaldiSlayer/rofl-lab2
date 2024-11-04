@@ -26,7 +26,7 @@ isInLanguageCheck auto str = let
     check = lookupMap (knownResults auto)
     isIn = check str
     isJust Nothing = False
-    isJust (Just x) = True
+    isJust (Just _) = True
     in do 
         if (isJust isIn)
             then return $ maybe (auto, False) (\x->(auto, x)) isIn
