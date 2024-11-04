@@ -1,10 +1,11 @@
 package mazegen
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
-	"github.com/BaldiSlayer/rofl-lab2/pkg/dsu"
 	"math/rand"
 	"time"
+
+	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
+	"github.com/BaldiSlayer/rofl-lab2/pkg/dsu"
 )
 
 type LightWallsGenerator struct{}

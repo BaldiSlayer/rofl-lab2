@@ -116,9 +116,9 @@ func (m *Misha) ProcessCommands(teacher mat.MAT, commandsChan chan string) {
 
 			tableParts := splitTableToParts(table)
 
-			eqTable := eqtable.NewOverMaze(tableParts)
+			//
 
-			equal, err := teacher.Equal(eqTable)
+			equal, err := teacher.Equal(tableParts)
 			if err != nil {
 				slog.Error("failed to check equality", "error", err)
 			}

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
@@ -46,7 +47,7 @@ func (r *Implementation) Include(query string) (bool, error) {
 
 func (r *Implementation) genCounterForStates(state models.Cell) string {
 	// необходимо вернуть путь от стейта до (-1, -1) и пойти в SpecialState путем выхода из каймы
-	if state == automata.SpecialState() {
+	if state == defaults.SpecialState() {
 		return r.mazeDFA.GetPath(state, false, true) + "N"
 	}
 
@@ -59,7 +60,7 @@ func (r *Implementation) genCounterForStates(state models.Cell) string {
 
 func (r *Implementation) genCounterForFinalState(state models.Cell) string {
 	// необходимо вернуть путь от стейта до (-1, -1) и пойти в SpecialState путем выхода из каймы
-	if state == automata.SpecialState() {
+	if state == defaults.SpecialState() {
 		return r.mazeDFA.GetPath(state, false, true) + "N"
 	}
 
@@ -68,7 +69,7 @@ func (r *Implementation) genCounterForFinalState(state models.Cell) string {
 }
 
 func (r *Implementation) genCounterForTransition(src automata.Transition, dst models.Cell) string {
-	if dst == automata.SpecialState() {
+	if dst == defaults.SpecialState() {
 		// иду обратно, чтобы не путать лернер и не возвращать ему слишком далекие клетки
 		return r.mazeDFA.GetPath(src.Src, true, true) + string(src.Symbol) +
 			map[byte]string{
@@ -137,8 +138,10 @@ func (r *Implementation) getCounterExample(dfaFromTable *automata.DFA) string {
 	return ""
 }
 
-func (r *Implementation) Equal(eqTable eqtable.EqTable) (models.EqualResponse, error) {
-	dfaFromTable := eqTable.ToDFA(r.maze)
+func (r *Implementation) Equal(tableParts eqtable.TableParts) (models.EqualResponse, error) {
+	eqTable := eqtable.NewOverMaze(tableParts, r.maze)
+
+	dfaFromTable := eqTable.ToDFA()
 
 	counter := r.getCounterExample(dfaFromTable)
 	if counter != "" {

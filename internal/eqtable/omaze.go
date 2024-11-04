@@ -2,6 +2,7 @@ package eqtable
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
@@ -12,17 +13,20 @@ type OverMaze struct {
 	suffixes []string
 	// [индекс_префикса][индекс_суффикса]
 	answers [][]bool
+
+	maze *maze.ThinWalled
 }
 
-func NewOverMaze(parts TableParts) *OverMaze {
+func NewOverMaze(parts TableParts, maze *maze.ThinWalled) *OverMaze {
 	return &OverMaze{
 		prefixes: parts.Prefixes,
 		suffixes: parts.Suffixes,
 		answers:  parts.Answers,
+		maze:     maze,
 	}
 }
 
-// GetWords -
+// GetWords - создает список всех слов (конкетенирует все возможные пары суффикс + префикс)
 func (table *OverMaze) getWords() map[string]bool {
 	mp := make(map[string]bool)
 
@@ -35,6 +39,8 @@ func (table *OverMaze) getWords() map[string]bool {
 	return mp
 }
 
+// wordIterate - функция итерации по слову, возвращает позицию, куда попадем из начальной клетки
+// после перехода по всем буквам слова word
 func wordIterate(
 	startState models.Cell,
 	word string,
@@ -67,7 +73,7 @@ func wordIterate(
 
 		// если то, куда мы переходим - специальное состояние, то нужно задать соответствующее значение
 		if maze.IsSpecial(nextState) {
-			nextState = automata.SpecialState()
+			nextState = defaults.SpecialState()
 		}
 
 		aut.AddTransition(curState, nextState, byte(letter))
@@ -80,15 +86,15 @@ func wordIterate(
 	return curState
 }
 
-func (table *OverMaze) ToDFA(maze *maze.ThinWalled) *automata.DFA {
+func (table *OverMaze) ToDFA() *automata.DFA {
 	startState := models.Cell{X: 0, Y: 0}
 
 	aut := automata.NewEmptyDFA()
 
 	// обходим полученную таблицу
 	for word, included := range table.getWords() {
-		// стоим в начале
-		stateAfterWalk := wordIterate(startState, word, maze, aut)
+		// обходим полученное слово
+		stateAfterWalk := wordIterate(startState, word, table.maze, aut)
 
 		// если на пересечении стояла единичка, добавляем в финальные состояния
 		if included {

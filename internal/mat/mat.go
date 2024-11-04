@@ -11,7 +11,7 @@ type MAT interface {
 	// Include - запрос на включение
 	Include(query string) (bool, error)
 	// Equal - запрос на эквивалентность
-	Equal(eqTable eqtable.EqTable) (models.EqualResponse, error)
+	Equal(tableParts eqtable.TableParts) (models.EqualResponse, error)
 	// Visualize - визуализация лабиринта
 	Visualize() ([]string, error)
 }

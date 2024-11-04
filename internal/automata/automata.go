@@ -2,13 +2,10 @@ package automata
 
 import (
 	"container/list"
+
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
-
-func SpecialState() models.Cell {
-	return models.Cell{X: -228, Y: -228}
-}
 
 type Transition struct {
 	Src    models.Cell
@@ -17,12 +14,6 @@ type Transition struct {
 
 type Transitions struct {
 	ts map[Transition]models.Cell
-}
-
-func NewTransitionsFromMap(ts map[Transition]models.Cell) Transitions {
-	return Transitions{
-		ts: ts,
-	}
 }
 
 func NewTransitions() Transitions {
@@ -237,7 +228,7 @@ func (dfa *DFA) Include(query string, isSpecial func(cell models.Cell) bool) boo
 	for _, letter := range query {
 		vec := symbolToVec(byte(letter))
 
-		if curState == SpecialState() {
+		if curState == defaults.SpecialState() {
 			nonDKAState = models.Cell{X: nonDKAState.X + vec.X, Y: nonDKAState.Y + vec.Y}
 
 			// если смогли вернуться в лабиринт/кайму
@@ -250,7 +241,7 @@ func (dfa *DFA) Include(query string, isSpecial func(cell models.Cell) bool) boo
 
 		nonDKAState = curState
 		curState = dfa.Transitions()[Transition{Src: curState, Symbol: byte(letter)}]
-		if curState == SpecialState() {
+		if curState == defaults.SpecialState() {
 			nonDKAState = models.Cell{X: nonDKAState.X + vec.X, Y: nonDKAState.Y + vec.Y}
 		}
 	}

@@ -230,7 +230,7 @@ func (w *ThinWalled) addTransitions(
 
 		// в спец клетку(и) можем попасть только из "каймы", там точно нет стенок
 		if w.IsSpecial(dst) {
-			transitions.Add(src, automata.SpecialState(), alphabet[idx])
+			transitions.Add(src, defaults.SpecialState(), alphabet[idx])
 
 			continue
 		}
@@ -295,7 +295,7 @@ func (w *ThinWalled) mazeIterator(mode int, f func(y, x int)) {
 // getAllStates получает все состояния для ДКА
 func (w *ThinWalled) getAllStates() map[models.Cell]struct{} {
 	states := make(map[models.Cell]struct{}, 1+w.width+w.height)
-	states[automata.SpecialState()] = struct{}{}
+	states[defaults.SpecialState()] = struct{}{}
 
 	w.mazeIterator(bmstore.Store(inCells, outCells), func(y, x int) {
 		states[models.Cell{X: x, Y: y}] = struct{}{}
@@ -307,7 +307,7 @@ func (w *ThinWalled) getAllStates() map[models.Cell]struct{} {
 // getAllStates получает все финальные состояния для ДКА
 func (w *ThinWalled) getFinalStates() map[models.Cell]struct{} {
 	finalStates := make(map[models.Cell]struct{})
-	finalStates[automata.SpecialState()] = struct{}{}
+	finalStates[defaults.SpecialState()] = struct{}{}
 
 	w.mazeIterator(bmstore.Store(outCells), func(y, x int) {
 		finalStates[models.Cell{X: x, Y: y}] = struct{}{}

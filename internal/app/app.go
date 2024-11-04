@@ -3,10 +3,11 @@ package app
 import (
 	"bufio"
 	"fmt"
+	"os"
+
 	"github.com/BaldiSlayer/rofl-lab2/internal/clinp"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mat"
 	"github.com/BaldiSlayer/rofl-lab2/internal/mazegen"
-	"os"
 )
 
 type Lab2 struct {
@@ -44,11 +45,13 @@ func (lab2 *Lab2) cli() {
 		}
 
 		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "error reading input:", err)
+			_, _ = fmt.Fprintln(os.Stderr, "error reading input:", err)
 
 			break
 		}
 	}
+
+	close(ch)
 }
 
 func (lab2 *Lab2) httpServer() {

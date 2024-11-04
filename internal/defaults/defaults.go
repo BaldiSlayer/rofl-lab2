@@ -16,6 +16,10 @@ func GetDirections() []models.Vector {
 	return []models.Vector{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}
 }
 
-const (
+func SpecialState() models.Cell {
+	return models.Cell{X: -228, Y: -228}
+}
+
+var (
 	EpsilonSymbol = "e"
 )

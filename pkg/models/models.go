@@ -10,6 +10,7 @@ type EqualResponse struct {
 	CounterExample CounterExample
 }
 
+// Cell - клетка лабиринта
 type Cell struct {
 	X int
 	Y int
