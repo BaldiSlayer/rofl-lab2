@@ -26,6 +26,10 @@ func NewOverMaze(parts TableParts, maze *maze.ThinWalled) *OverMaze {
 	}
 }
 
+func (table *OverMaze) SetMaze(maze *maze.ThinWalled) {
+	table.maze = maze
+}
+
 // GetWords - создает список всех слов (конкетенирует все возможные пары суффикс + префикс)
 func (table *OverMaze) getWords() map[string]bool {
 	mp := make(map[string]bool)

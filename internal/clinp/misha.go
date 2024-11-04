@@ -15,7 +15,7 @@ func readInclude(ch chan string) string {
 	return <-ch
 }
 
-func readTable(ch chan string) []string {
+func readTable(ch chan string) eqtable.TableParts {
 	tableLines := make([]string, 0)
 
 	for message := range ch {
@@ -26,7 +26,7 @@ func readTable(ch chan string) []string {
 		tableLines = append(tableLines, message)
 	}
 
-	return tableLines
+	return splitTableToParts(tableLines)
 }
 
 func splitTableToParts(table []string) eqtable.TableParts {
@@ -112,11 +112,7 @@ func (m *Misha) ProcessCommands(teacher mat.MAT, commandsChan chan string) {
 		}
 
 		if message == "table" {
-			table := readTable(commandsChan)
-
-			tableParts := splitTableToParts(table)
-
-			//
+			tableParts := readTable(commandsChan)
 
 			equal, err := teacher.Equal(tableParts)
 			if err != nil {
