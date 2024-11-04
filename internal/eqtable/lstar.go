@@ -2,6 +2,7 @@ package eqtable
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"sort"
 	"strings"
 )
 
@@ -37,9 +38,49 @@ func NewLStar(parts TableParts) *LStar {
 	}
 }
 
-func getClassesOfEquivalence() {
-	classesOfEquivalence := make([]int, 0)
-	_ = classesOfEquivalence
+type ClassMember struct {
+	// lineNumber изначальный номер строки
+	lineNumber int
+
+	prefixVal string
+}
+
+type ClassesOfEquivalence struct {
+	classesOfEquivalence map[string][]ClassMember
+	wordToClass          map[string]string
+}
+
+func (eClasses *ClassesOfEquivalence) getClassesOfEquivalence(
+	prefixes []string,
+	answers []string,
+) *ClassesOfEquivalence {
+	classesOfEquivalence := make(map[string][]ClassMember, 0)
+	wordToClass := make(map[string]string)
+
+	for i, prefix := range prefixes {
+		if _, ok := classesOfEquivalence[answers[i]]; !ok {
+			classesOfEquivalence[answers[i]] = make([]ClassMember, 0)
+
+			classesOfEquivalence[answers[i]] = append(classesOfEquivalence[answers[i]], ClassMember{
+				lineNumber: i,
+				prefixVal:  prefix,
+			})
+
+			wordToClass[prefix] = answers[i]
+		}
+	}
+
+	// сортируем
+	for _, members := range classesOfEquivalence {
+		sort.Slice(members, func(i, j int) bool {
+			return members[i].prefixVal < members[j].prefixVal
+		})
+	}
+
+	return &ClassesOfEquivalence{
+		classesOfEquivalence: classesOfEquivalence,
+		wordToClass:          wordToClass,
+	}
 }
 
 func (lstar *LStar) ToDFA() *automata.DFA {
