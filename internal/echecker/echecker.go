@@ -1,4 +1,6 @@
 package echecker
 
-type OverMaze interface {
+// EqualityChecker делает проверку на эквивалентность автомата полученного из лабиринта и из таблицы
+type EqualityChecker interface {
+	GetCounterExample() string
 }

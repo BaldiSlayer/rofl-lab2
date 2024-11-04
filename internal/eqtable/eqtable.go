@@ -2,7 +2,6 @@ package eqtable
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
-	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 )
 
 type TableParts struct {
@@ -13,5 +12,5 @@ type TableParts struct {
 }
 
 type EqTable interface {
-	ToDFA(maze *maze.ThinWalled) *automata.DFA
+	ToDFA() *automata.DFA
 }

@@ -139,7 +139,10 @@ func (r *Implementation) getCounterExample(dfaFromTable *automata.DFA) string {
 }
 
 func (r *Implementation) Equal(tableParts eqtable.TableParts) (models.EqualResponse, error) {
+	// TODO надо придумать, как тут сделать покрасивее
 	eqTable := eqtable.NewOverMaze(tableParts, r.maze)
+
+	// context.TODO хуй
 
 	dfaFromTable := eqTable.ToDFA()
 
