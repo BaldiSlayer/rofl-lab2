@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/BaldiSlayer/rofl-lab2/internal/app"
+	"github.com/BaldiSlayer/rofl-lab2/internal/clinp"
 )
 
 const (
@@ -12,5 +13,7 @@ const (
 func main() {
 	mat := app.NewLab2(width, height)
 
-	mat.Run()
+	mat.Run(
+		&clinp.Misha{},
+	)
 }

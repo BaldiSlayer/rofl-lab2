@@ -13,8 +13,9 @@ import (
 type Lab2 struct {
 	teacher        mat.MAT
 	inputProcessor clinp.InputProcessor
-	width          int
-	height         int
+
+	width  int
+	height int
 }
 
 func NewLab2(width, height int) *Lab2 {
@@ -58,8 +59,8 @@ func (lab2 *Lab2) httpServer() {
 	// TODO impelement at some time
 }
 
-func (lab2 *Lab2) Run() {
-	lab2.inputProcessor = &clinp.Misha{}
+func (lab2 *Lab2) Run(iproc clinp.InputProcessor) {
+	lab2.inputProcessor = iproc
 
 	// TODO это нужно выбирать в зависимости от значения флага
 	lab2.cli()
