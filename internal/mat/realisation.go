@@ -3,7 +3,7 @@ package mat
 import (
 	"errors"
 
-	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/cautomata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/eqtable"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
@@ -18,7 +18,7 @@ type Implementation struct {
 	mazeGenerator *mazegen.LightWallsGenerator
 	maze          *maze.ThinWalled
 
-	mazeDFA *automata.DFA
+	mazeDFA *cautomata.DFA
 }
 
 func NewImplementation(gen *mazegen.LightWallsGenerator, width, height int) *Implementation {
@@ -68,7 +68,7 @@ func (r *Implementation) genCounterForFinalState(state models.Cell) string {
 	return r.mazeDFA.GetPath(state, true, true)
 }
 
-func (r *Implementation) genCounterForTransition(src automata.Transition, dst models.Cell) string {
+func (r *Implementation) genCounterForTransition(src cautomata.Transition, dst models.Cell) string {
 	if dst == defaults.SpecialState() {
 		// иду обратно, чтобы не путать лернер и не возвращать ему слишком далекие клетки
 		return r.mazeDFA.GetPath(src.Src, true, true) + string(src.Symbol) +
@@ -87,7 +87,7 @@ func (r *Implementation) genCounterForTransition(src automata.Transition, dst mo
 }
 
 // getNonEqualFinalStatePath ищет контрпример по наличию состояния
-func (r *Implementation) getNonEqualStatePath(dfaFromTable *automata.DFA) string {
+func (r *Implementation) getNonEqualStatePath(dfaFromTable *cautomata.DFA) string {
 	for mazeState := range r.mazeDFA.States() {
 		if !dfaFromTable.HasState(mazeState) {
 			return r.genCounterForStates(mazeState)
@@ -98,7 +98,7 @@ func (r *Implementation) getNonEqualStatePath(dfaFromTable *automata.DFA) string
 }
 
 // getNonEqualFinalStatePath ищет контрпример по наличию финального состояния
-func (r *Implementation) getNonEqualFinalStatePath(dfaFromTable *automata.DFA) string {
+func (r *Implementation) getNonEqualFinalStatePath(dfaFromTable *cautomata.DFA) string {
 	for mazeFinalState := range r.mazeDFA.GetFinalStates() {
 		if !dfaFromTable.HasFinalState(mazeFinalState) {
 			return r.genCounterForFinalState(mazeFinalState)
@@ -109,7 +109,7 @@ func (r *Implementation) getNonEqualFinalStatePath(dfaFromTable *automata.DFA) s
 }
 
 // getNonEqualTransitions ищет контрпример по переходам
-func (r *Implementation) getNonEqualTransitions(dfaFromTable *automata.DFA) string {
+func (r *Implementation) getNonEqualTransitions(dfaFromTable *cautomata.DFA) string {
 	mazeTransitions := r.mazeDFA.Transitions()
 
 	for src := range mazeTransitions {
@@ -122,8 +122,8 @@ func (r *Implementation) getNonEqualTransitions(dfaFromTable *automata.DFA) stri
 }
 
 // getCounterExample ищет контрпример
-func (r *Implementation) getCounterExample(dfaFromTable *automata.DFA) string {
-	counterGens := []func(dfaFromTable *automata.DFA) string{
+func (r *Implementation) getCounterExample(dfaFromTable *cautomata.DFA) string {
+	counterGens := []func(dfaFromTable *cautomata.DFA) string{
 		r.getNonEqualStatePath,
 		r.getNonEqualFinalStatePath,
 		r.getNonEqualTransitions,

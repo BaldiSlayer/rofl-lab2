@@ -1,9 +1,17 @@
 package eqtable
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
+	"github.com/BaldiSlayer/rofl-lab2/internal/wautomata"
 	"sort"
 	"strings"
+)
+
+var alphabet = defaults.GetAlphabet()
+
+const (
+	wordIn  = '+'
+	wordOut = '-'
 )
 
 // OverMaze - таблица, которую мне передают при запросе на эквивалентность
@@ -22,9 +30,9 @@ func NewLStar(parts TableParts) *LStar {
 
 		for _, val := range line {
 			if val {
-				lineAnswers.WriteByte('+')
+				lineAnswers.WriteByte(wordIn)
 			} else {
-				lineAnswers.WriteByte('-')
+				lineAnswers.WriteByte(wordOut)
 			}
 		}
 
@@ -50,7 +58,7 @@ type ClassesOfEquivalence struct {
 	wordToClass          map[string]string
 }
 
-func (eClasses *ClassesOfEquivalence) getClassesOfEquivalence(
+func newClassesOfEquivalence(
 	prefixes []string,
 	answers []string,
 ) *ClassesOfEquivalence {
@@ -60,20 +68,20 @@ func (eClasses *ClassesOfEquivalence) getClassesOfEquivalence(
 	for i, prefix := range prefixes {
 		if _, ok := classesOfEquivalence[answers[i]]; !ok {
 			classesOfEquivalence[answers[i]] = make([]ClassMember, 0)
-
-			classesOfEquivalence[answers[i]] = append(classesOfEquivalence[answers[i]], ClassMember{
-				lineNumber: i,
-				prefixVal:  prefix,
-			})
-
-			wordToClass[prefix] = answers[i]
 		}
+
+		classesOfEquivalence[answers[i]] = append(classesOfEquivalence[answers[i]], ClassMember{
+			lineNumber: i,
+			prefixVal:  prefix,
+		})
+
+		wordToClass[prefix] = answers[i]
 	}
 
-	// сортируем
+	// сортируем строки в каждом из классов эквивалентности
 	for _, members := range classesOfEquivalence {
-		sort.Slice(members, func(i, j int) bool {
-			return members[i].prefixVal < members[j].prefixVal
+		sort.SliceStable(members, func(i, j int) bool {
+			return len(members[i].prefixVal) < len(members[j].prefixVal)
 		})
 	}
 
@@ -83,12 +91,57 @@ func (eClasses *ClassesOfEquivalence) getClassesOfEquivalence(
 	}
 }
 
-func (lstar *LStar) ToDFA() *automata.DFA {
-	aut := automata.NewEmptyDFA()
+func (lstar *LStar) ToDFA() *wautomata.DFA {
+	aut := wautomata.NewEmptyDFA()
 
-	_ = aut
+	epsIdx := -1
+	for i, val := range lstar.suffixes {
+		if val == "" {
+			epsIdx = i
 
-	// aut.AddState()
+			break
+		}
+	}
 
-	return &automata.DFA{}
+	eqClasses := newClassesOfEquivalence(lstar.prefixes, lstar.answers)
+
+	// добавляем состояния в автомат
+	for ansString, members := range eqClasses.classesOfEquivalence {
+		member := members[0]
+
+		aut.AddState(member.prefixVal)
+
+		// помечаем состояние финальным
+		if ansString[epsIdx] == wordIn {
+			aut.AddFinalState(member.prefixVal)
+		}
+	}
+
+	if !aut.HasState("") {
+		aut.AddState("")
+	}
+
+	for _, members := range eqClasses.classesOfEquivalence {
+		for _, member := range members {
+			if member.prefixVal == "ba" {
+				u := 0
+
+				_ = u
+			}
+
+			for _, letter := range alphabet {
+				destState := member.prefixVal + string(letter)
+
+				if eqClass, ok := eqClasses.wordToClass[destState]; ok {
+					aut.AddTransition(
+						member.prefixVal,
+						eqClasses.classesOfEquivalence[eqClass][0].prefixVal,
+						letter,
+					)
+				}
+			}
+		}
+	}
+
+	return aut
 }

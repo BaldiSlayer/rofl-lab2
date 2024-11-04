@@ -1,7 +1,7 @@
 package eqtable
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/cautomata"
 )
 
 type TableParts struct {
@@ -12,5 +12,5 @@ type TableParts struct {
 }
 
 type EqTable interface {
-	ToDFA() *automata.DFA
+	ToDFA() *cautomata.DFA
 }

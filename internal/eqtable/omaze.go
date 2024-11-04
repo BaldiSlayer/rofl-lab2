@@ -1,7 +1,7 @@
 package eqtable
 
 import (
-	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/cautomata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/internal/maze"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
@@ -49,7 +49,7 @@ func wordIterate(
 	startState models.Cell,
 	word string,
 	maze *maze.ThinWalled,
-	aut *automata.DFA,
+	aut *cautomata.DFA,
 ) models.Cell {
 	curState := startState
 
@@ -90,10 +90,10 @@ func wordIterate(
 	return curState
 }
 
-func (table *OverMaze) ToDFA() *automata.DFA {
+func (table *OverMaze) ToDFA() *cautomata.DFA {
 	startState := models.Cell{X: 0, Y: 0}
 
-	aut := automata.NewEmptyDFA()
+	aut := cautomata.NewEmptyDFA()
 
 	// обходим полученную таблицу
 	for word, included := range table.getWords() {

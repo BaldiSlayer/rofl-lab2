@@ -1,4 +1,4 @@
-package automata
+package cautomata
 
 import (
 	"container/list"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/bmstore"
 
-	"github.com/BaldiSlayer/rofl-lab2/internal/automata"
+	"github.com/BaldiSlayer/rofl-lab2/internal/cautomata"
 	"github.com/BaldiSlayer/rofl-lab2/internal/defaults"
 	"github.com/BaldiSlayer/rofl-lab2/pkg/models"
 )
@@ -218,9 +218,9 @@ func (w *ThinWalled) MakeExit(row, col int) {
 
 // addTransitions добавляет для
 func (w *ThinWalled) addTransitions(
-	transitions automata.Transitions,
+	transitions cautomata.Transitions,
 	i, j int,
-) automata.Transitions {
+) cautomata.Transitions {
 	directions := defaults.GetDirections()
 	alphabet := defaults.GetAlphabet()
 
@@ -317,8 +317,8 @@ func (w *ThinWalled) getFinalStates() map[models.Cell]struct{} {
 }
 
 // getTransitions получает переходы автомата
-func (w *ThinWalled) getTransitions() automata.Transitions {
-	transitions := automata.NewTransitions()
+func (w *ThinWalled) getTransitions() cautomata.Transitions {
+	transitions := cautomata.NewTransitions()
 
 	w.mazeIterator(bmstore.Store(inCells, outCells), func(y, x int) {
 		transitions = w.addTransitions(transitions, y, x)
@@ -328,14 +328,14 @@ func (w *ThinWalled) getTransitions() automata.Transitions {
 }
 
 // ToDFA переводит лабиринт в детерминированный конечный автомат
-func (w *ThinWalled) ToDFA() *automata.DFA {
+func (w *ThinWalled) ToDFA() *cautomata.DFA {
 	transitions := w.getTransitions()
 
 	finalStates := w.getFinalStates()
 
 	allStates := w.getAllStates()
 
-	return automata.NewDFA(
+	return cautomata.NewDFA(
 		models.Cell{X: 0, Y: 0},
 		finalStates,
 		defaults.GetAlphabet(),
