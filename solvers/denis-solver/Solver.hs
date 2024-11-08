@@ -3,7 +3,6 @@ module Solver where
 import Models
 import Checker
 import Printer
---import Data.Map (Map, findWithDefault, fromList, member)
 
 
 --Собирает строки таблицы классов эквивалентности в один список
@@ -15,22 +14,7 @@ generateMaplistFromList (x:xs) sl = do
     stail <- generateMaplistFromList xs sl
     return ((s, x) `insert` stail)
 
-filterOut :: Automat -> [([Bool], String)] -> IO [([Bool], String)]
-filterOut a [] = return []
-filterOut a (x:xs) = do
-    r1 <- isOut a x
-    r2 <- filterOut a xs
-    if r1
-        then return r2
-        else return (x:r2)
-    where
-    isOut auto (bs, str) = do
-        if str == ""
-            then return False
-            else do
-                (_, res) <- listisInLanguageCheck auto ["", "S", "W", "N", "E"] str
-                return (res  == [True, True, True, True, True])
-
+-- Генерирует "обратный" путь
 revertPath :: String -> String
 revertPath "" = ""
 revertPath str = map rev $ reverse str where
@@ -40,43 +24,24 @@ revertPath str = map rev $ reverse str where
     rev 'W' = 'E'
     rev x = x
 
--- Мемоизированная версия функции
-generateMaplistFromListCheck :: Automat -> [String] -> [String] -> IO (Automat, [([Bool], String)])
-generateMaplistFromListCheck a [] sl = do
-    return (a,[])
-generateMaplistFromListCheck a (x:xs) sl = do
-    (a1, s) <- listisInLanguageCheck a sl x
-    (a2, stail) <- generateMaplistFromListCheck a1 xs sl
-    return (a2, (s,x) `insert` stail)
 
-{-Создает таблицу классов эквивалентности по строке-}
-generateAutomat ::(Int, Int) -> String -> IO Automat
-generateAutomat size str = do
-                (a, mapa) <- generateMaplistFromListCheck (emptyAutomat size) prefList suffList
-                mapa1 <- filterOut a mapa
-                return $ (Automat (unqPairList mapa1) suffList (knownResults a) size)
-                    where 
-                        prefList = expandList $ generatePrefixes str
-                        suffList = ["","E","N","S","W"]
 
 {-Функция добавляет суффиксы строки к существующей таблице классов эквивалентности-}
 addSufsToAutomat :: Automat -> [String] -> IO Automat
 addSufsToAutomat automat strlist = let 
     suff = strlist `unqConcat` (suffixes automat)
     in do
-        (a1, mapa) <- generateMaplistFromListCheck automat (elems (prefixesAndColumns automat)) suff
-        --mapa1 <- filterOut a1 mapa
-        return $ (Automat mapa suff (knownResults a1) (mazeSize a1))
+        mapa <- generateMaplistFromList (elems (prefixesAndColumns automat)) suff
+        return $ (Automat mapa suff (mazeSize automat))
 
 -- Функция добавляет префиксы строки с сущетсвующей таблице классов эквивалентности
 addPrefsToAutomat :: Automat -> [String] -> IO Automat
 addPrefsToAutomat automat strlist = let
     suff = suffixes automat  
     in do
-        (a1, expandedTable) <- generateMaplistFromListCheck automat strlist suff
+        expandedTable <- generateMaplistFromList strlist suff
         mapa <- return (insertList (prefixesAndColumns automat) expandedTable)
-        --mapa1 <- filterOut a1 mapa
-        return $ (Automat mapa suff (knownResults a1) (mazeSize a1))
+        return $ (Automat mapa suff (mazeSize automat))
 
 -- Функция добавляет и префиксы и суффиксы к существующей таблице классов эквивалентности
 addStringToAutomat :: Automat -> String -> IO Automat
@@ -86,9 +51,11 @@ addStringToAutomat automat str = let
     in do
         mapa  <- generateMaplistFromList prefs suffs
         --mapa1 <- filterOut a1 mapa
-        return $ (Automat mapa suffs [] (mazeSize automat))
+        return $ (Automat mapa suffs (mazeSize automat))
 
 -----------------------------------------------------------------------------
+
+-- функция, прохождения в соответсвии с путем
 goAlong :: String -> (Int, Int)
 goAlong str = goAlong' str (0,0) where
     goAlong' [] (a,b) = (a,b)
@@ -98,6 +65,7 @@ goAlong str = goAlong' str (0,0) where
     goAlong' ('E':xs) (a,b) = goAlong' xs (a+1, b)
     goAlong' (x:xs) (a,b) = (0,0)
 
+-- генерирует префиксы обхода по границе лабиринта
 generatePathes :: (Int, Int) -> (Int, Int) -> [String]
 generatePathes (x,y) (w, h) | x == -1 = generatePathes' (x,y) (w,h) (x,y+1) "S"
                             | y == -1 = generatePathes' (x,y) (w,h) (x-1,y) "W"
@@ -123,16 +91,10 @@ addBorder a path = do
     minPathMB <- return $ lookupMap (prefixesAndColumns a) line -- получаем минимизированный вариант(гарантировано будет)
     minPath <- return $ maybe path (\x-> x) minPathMB
     (x,y) <- return $ goAlong minPath -- получает координаты выхода из лабиринта
-    --putStrLn $ show (x,y)
-    pathList <- return $ map ((++) minPath) $ generatePathes (x,y) (mazeSize a)
-    pathRev <- return $ map revertPath pathList
-    --putStrLn $ show pathList
-    --putStrLn $ show pathRev
-    a1 <- addSufsToAutomat a pathRev
+    pathList <- return $ map ((++) minPath) $ generatePathes (x,y) (mazeSize a) -- генерирует шаги по границе лабиринта
+    pathRev <- return $ map revertPath pathList -- генерирует обратные суффиксы
+    a1 <- addSufsToAutomat a pathRev -- добавляет суффиксы и префиксы к автомату
     a2 <- addPrefsToAutomat a1 pathList
-    --putStrLn $ generateStringOfTable a
-    --putStrLn $ generateStringOfTable a1
-    --putStrLn $ generateStringOfTable a2
     return a2
     where
         

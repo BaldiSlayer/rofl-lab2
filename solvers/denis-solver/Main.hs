@@ -27,15 +27,6 @@ checkAutomat a = do
         else return (False, str)
 
 
-loop1 :: Automat -> IO()
-loop1 a = do
-    (res, contr) <- checkAutomat a
-    if res 
-        then putStrLn "Succes"
-        else do
-            newauto <- addStringToAutomat a contr
-            loop newauto    
-
 loop :: Automat -> IO()
 loop a = do
     (res, contr) <- checkAutomat a
@@ -54,13 +45,4 @@ main = do
     auto <- addStringToAutomat (emptyAutomat (x,y)) str
     auto1 <- addBorder auto str 
     loop auto1
-
-check :: IO()
-check = do
-    (x,y) <- readFromFile "./parameters.txt"
-    sendTable "e\ne 0\n"
-    str <- getLine
-    auto <- addStringToAutomat (emptyAutomat (x,y)) str
-    auto1 <- addBorder auto str 
-    putStrLn $ generateStringOfTable auto1
 

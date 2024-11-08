@@ -1,7 +1,5 @@
 module Models where
 
--- import Data.Map as Map (Map, elems, fromList, toList)
--- Почему-то перестала работать библиотека
 ----------------------------------------------------
 
 keys :: (Ord k) => [(k, a)] -> [k]
@@ -34,12 +32,13 @@ unqPairList arr = arr `insertList` []
 data Automat = Automat{
     prefixesAndColumns :: [([Bool], String)],
     suffixes :: [String],
-    knownResults :: [(String, Bool)],
     mazeSize :: (Int, Int)
 }
 
 emptyAutomat :: (Int, Int) -> Automat
-emptyAutomat (x,y) = Automat [([False], "")] [""] [("", False)] (x,y)
+emptyAutomat (x,y) = Automat [([False], "")] [""] (x,y)
+
+
 --------------------------------------------------------------------------------
 
 -- Конкатенация списков с обеспечением уникальности элементов(второй список должен быть гарантировано отсортирован)
@@ -57,6 +56,8 @@ unqAppend x [] = [x]
 unqAppend x (y:ys) | x `unqCompare` y = y : (unqAppend x ys)
                    | x == y = y : ys
                    | otherwise = x : y : ys  
+
+
 ---------------------------------------------------------------------------------
 {-Генерирует список всех префиксов, начиная с пустого префикса-}
 generatePrefixes :: String -> [String]
