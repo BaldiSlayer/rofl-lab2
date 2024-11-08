@@ -6,15 +6,14 @@ import Printer
 --import Data.Map (Map, findWithDefault, fromList, member)
 
 
-{-Собирает строки таблицы классов эквивалентности в один список
+--Собирает строки таблицы классов эквивалентности в один список
 generateMaplistFromList :: [String] -> [String] -> IO [([Bool], String)]
 generateMaplistFromList [] sl = do 
     return []
 generateMaplistFromList (x:xs) sl = do 
     s <- listisInLanguage sl x 
     stail <- generateMaplistFromList xs sl
-    return ((s, x):stail)
--}
+    return ((s, x) `insert` stail)
 
 filterOut :: Automat -> [([Bool], String)] -> IO [([Bool], String)]
 filterOut a [] = return []
@@ -85,9 +84,9 @@ addStringToAutomat automat str = let
     suffs = (generatePrefixes $ revertPath str) `unqConcat` ((expandList $ generateSuffixes str) `unqConcat` (suffixes automat))
     prefs = (expandList $ generatePrefixes str) `unqConcat` (elems (prefixesAndColumns automat))
     in do
-        (a1, mapa)  <- generateMaplistFromListCheck automat prefs suffs
+        mapa  <- generateMaplistFromList prefs suffs
         --mapa1 <- filterOut a1 mapa
-        return $ (Automat mapa suffs (knownResults a1) (mazeSize a1))
+        return $ (Automat mapa suffs [] (mazeSize automat))
 
 -----------------------------------------------------------------------------
 goAlong :: String -> (Int, Int)
@@ -120,7 +119,7 @@ generatePathes (x,y) (w, h) | x == -1 = generatePathes' (x,y) (w,h) (x,y+1) "S"
 -- добавляет префиксы до граничных клеток и суффиксы
 addBorder :: Automat -> String -> IO Automat
 addBorder a path = do
-    (_, line) <- listisInLanguageCheck a (suffixes a) path -- получаем строку таблицы классов эквивалентности для выхода из лабиринта
+    line <- listisInLanguage (suffixes a) path -- получаем строку таблицы классов эквивалентности для выхода из лабиринта
     minPathMB <- return $ lookupMap (prefixesAndColumns a) line -- получаем минимизированный вариант(гарантировано будет)
     minPath <- return $ maybe path (\x-> x) minPathMB
     (x,y) <- return $ goAlong minPath -- получает координаты выхода из лабиринта

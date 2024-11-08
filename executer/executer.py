@@ -8,7 +8,7 @@ def readLen(pipe):
     return os.fstat(pipe.fileno()).st_size
 
 def runSolve(MATpath, solverpath):
-    solver = sp.Popen(solverpath, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sp.PIPE, text=True, bufsize=1)
+    solver = sp.Popen(solverpath, stdout=sp.PIPE, stdin=sp.PIPE, stderr=sys.stdout, text=True, bufsize=1)
     MAT = sp.Popen(MATpath, stdout=solver.stdin, stdin=solver.stdout, stderr=sys.stdout,text=True, bufsize=1)
 
     try:
@@ -19,8 +19,8 @@ def runSolve(MATpath, solverpath):
         for line in MAT.stderr:
             print("MAT-err: "+line, end="")
     finally:
-        print("MAT-err:" + MAT.stderr.read())
-        print("solver-err:"+solver.stderr.read())
+        #print("MAT-err:" + MAT.stderr.read())
+        #print("solver-err:"+solver.stderr.read())
         MAT.kill()
         solver.kill()
         

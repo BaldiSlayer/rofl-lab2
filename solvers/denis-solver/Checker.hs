@@ -11,7 +11,7 @@ isInLanguage str = do
             res <- getLine
             return ((length res) /= 0 && (head res) == '1') -- для простоты тестирования, "не 1" - 0
 
-{-Создает строку таблицы классов эквивалентности. Принимает список суффиксов и префикс
+--Создает строку таблицы классов эквивалентности. Принимает список суффиксов и префикс
 listisInLanguage :: [String] -> String -> IO [Bool]
 listisInLanguage [] str  = do
                             return []
@@ -19,7 +19,6 @@ listisInLanguage (x:xs) str = do
                             res1 <- isInLanguage $ str++x
                             res2 <- listisInLanguage xs str
                             return (res1 : res2)
--}
 
 isInLanguageCheck :: Automat -> String -> IO (Automat, Bool)
 isInLanguageCheck auto str = let 
