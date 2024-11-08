@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+./executer.py "python3 ../mat/main.py" "../solvers/denis-solver/Main"
