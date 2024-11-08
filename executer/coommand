@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-./executer.py "python3 ../tfl-lab2/main.py" "../solvers/denis-solver/Main"
+./executer.py "python3 ../mat/main.py" "../solvers/denis-solver/Main"

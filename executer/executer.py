@@ -2,7 +2,6 @@
 
 import sys, os
 import subprocess as sp
-import select
 
 def readLen(pipe):
     return os.fstat(pipe.fileno()).st_size
