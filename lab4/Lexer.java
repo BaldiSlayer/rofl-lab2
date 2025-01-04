@@ -28,7 +28,7 @@ class Lexer{
 	int groupCounter = 1; // считает номер очередной группы захвата. При выходе за число 9 - бросаем ошибку
 	
 	public static void main(String[] args){
-		String test="((?: a | bc* | c)a(?1))\1*  |\td";
+		String test="((?: a | bc* | c)a(?1))\\1*  |\td";
 		
 		Lexer r = new Lexer();
 		try{
@@ -43,7 +43,7 @@ class Lexer{
 	public LinkedList<Lexem> lex(String msg) throws LexerException{
 		inputString = msg;
 		LinkedList<Lexem> arr = new LinkedList<Lexem>();
-		arr.add(null); // aka EOF
+		//arr.add(null); // aka EOF
 		
 		for(parseIndex = 0; parseIndex<msg.length();){
 			char nowChar = msg.charAt(parseIndex);
@@ -51,7 +51,7 @@ class Lexer{
 			if(isSpace(nowChar)){ // space \t 
 				//nothing
 				parseIndex++;
-			}else if(Char.isAlphabet(nowChar)){ // [a-z]
+			}else if(Character.isAlphabetic(nowChar)){ // [a-z]
 				arr.add(new Lexem(parseIndex, parseIndex++, LexemType.letter));
 			}else if(nowChar == ')'){
 				arr.add(new Lexem(parseIndex, parseIndex++, LexemType.rb));
@@ -63,8 +63,20 @@ class Lexer{
 				arr.add(parseWordGrab());
 			}else if(nowChar == '('){// ( | (?: | (? [num] )
 				// (? [num]) накладывает больше всего условий - парсим в начале
+				int start = parseIndex;
+				try{
+					arr.add(parseRegGrab());
+					continue;
+				}catch(LexerException e){}
 				// (?: после пытаемся распарсить это
+				parseIndex = start;
+				try{
+					arr.add(parseFreeBracket());
+					continue;
+				}catch(LexerException e){}
 				// после парсим только (
+				parseIndex = start;
+				arr.add(parseGroup());
 			}else{
 				throw new LexerException(String.format("На позиции %d, найден не поддерживаемый символ '%c'",
 					parseIndex+1, nowChar));
@@ -73,28 +85,29 @@ class Lexer{
 		return arr;
 	}
 	
-	private Lexem parseWordGrab(){	// \[1-9]
+	private Lexem parseWordGrab() throws LexerException{	// \[1-9]
 		parseIndex++;
-		if(parseIndex == inputString.length())
-			throw LexerException(String.format("На позиции %d при обработке \[1-9] ожидалась цифра, найден конец строки", parseIndex+1);
 		
-		char nowChar = inputString.charAt(parseIndex);
-		if(nowChar > '1' && nowChar < '9'){
-			Lexem r = new Lexem(parseIndex-1, parseIndex++, LexemType.wordgrab);
-			r.value = (int)(nowChar - '0');
-			return r;
-		}else{
-			throw LexerException(String.format("На позиции %d при обработке \[1-9] ожидалась цифра от 0 до 9, найден '%с'",
-				parseIndex+1, nowChar);
-		}
+		Lexem r = new Lexem(parseIndex-1, parseIndex, LexemType.wordgrab);
+		r.value = parseNum();
+		return r;
 	}
-	private Lexem parseRegGrab(){	// (? [1-9] )
+	private Lexem parseRegGrab() throws LexerException{	// (? [1-9] )
+		parseIndex++;
+		parseChar("(?[1-9])", '?');
+		Lexem r = new Lexem(parseIndex-1, parseIndex, LexemType.reggrab);
+		r.value = parseNum();
 		
+		parseChar("(?[1-9])", ')');
+		return r;
 	}
-	private Lexem parseFreeBracket(){	// (?:
-		
+	private Lexem parseFreeBracket() throws LexerException{	// (?:
+		parseIndex++;
+		parseChar("free bracket", '?');
+		parseChar("free bracket", ':');
+		return new Lexem(parseIndex-3, parseIndex-1, LexemType.lneutr);
 	}
-	private Lexem parseGroup(){		// ( при входе в функцию известно, что на позиции стоит (
+	private Lexem parseGroup() throws LexerException{		// ( при входе в функцию известно, что на позиции стоит (
 		if(groupCounter > 9 && groupCounter < 1)
 			throw new LexerException("Превышено максимальное количество групп захвата: от 1 до 9");
 		Lexem r = new Lexem(parseIndex, parseIndex++, LexemType.lgroup);
@@ -104,6 +117,40 @@ class Lexer{
 	
 	private boolean isSpace(char a){
 		return (a == ' ') || (a == '\t');
+	}
+	private void tryLength(String parse, String expect) throws LexerException{
+		if(parseIndex == inputString.length())
+			throw new LexerException(String.format("На позиции %d при обработке %s ожидалась %s, найден конец строки",
+				parseIndex+1, parse, expect));
+	}
+	private void tryLength(String parse, char expect) throws LexerException{
+		if(parseIndex == inputString.length())
+			throw new LexerException(String.format("На позиции %d при обработке %s ожидалась '%c', найден конец строки",
+				parseIndex+1, parse, expect));
+	}
+	
+	private void parseChar(String parse, char c) throws LexerException{
+		tryLength(parse, c);
+		
+		char nowChar = inputString.charAt(parseIndex);
+		if(nowChar != c){
+			throw new LexerException(String.format("На позиции %d при обработке %s ожидалась цифра '%c', найден '%c'",
+				parseIndex+1, parse, c, nowChar));
+		}
+		parseIndex++;
+	}
+	private int parseNum() throws LexerException{
+		tryLength("\\[1-9]", "цифра");
+		
+		char nowChar = inputString.charAt(parseIndex);
+		if(nowChar >= '1' && nowChar <= '9'){
+			int r = (int)(nowChar - '0');
+			parseIndex++;
+			return r;
+		}else{
+			throw new LexerException(String.format("На позиции %d при обработке \\[1-9] ожидалась цифра от 1 до 9, найден '%c'",
+				parseIndex+1, nowChar));
+		}
 	}
 	
 	enum LexemType{
@@ -133,7 +180,7 @@ class Lexer{
 }
 
 
-class LexerException extends Exception{
+class LexerException extends GrammarException{
 	LexerException(String msg){
 		super("lexer: "+msg);
 	}
