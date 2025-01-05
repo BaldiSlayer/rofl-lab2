@@ -188,6 +188,6 @@ class Lexer{
 
 class LexerException extends GrammarException{
 	LexerException(String msg){
-		super("lexer: "+msg);
+		super(msg);
 	}
 }

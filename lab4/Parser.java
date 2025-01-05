@@ -147,8 +147,11 @@ class Parser{
 		return (lexemList.peek() == null && t == null) || (lexemList.peek() != null && lexemList.peek().type == t); 
 	}
 	Lexer.Lexem parseLexem(Lexer.LexemType t) throws ParserException{
+		if(lexemList.peek() == null)
+			throw new ParserException(String.format("Ожидалось %s, найдено конец ввода", t));
+		
 		Lexer.Lexem l = lexemList.pop();
-		if(l == null || l.type != t)
+		if(l.type != t)
 			throw new ParserException(String.format("Ожидалось %s, найдено %s", t, l));
 		
 		return l;
@@ -157,7 +160,7 @@ class Parser{
 }
 class ParserException extends GrammarException{
 	ParserException(String msg){
-		super("parse: "+msg);
+		super(msg);
 	}
 }
 
@@ -196,7 +199,7 @@ class Reg{
 class Group extends Reg{
 	//value = 0 if neutral group, value = 1-9 grab group
 	public LinkedList<LinkedList<Reg>> alternatives; 
-	public boolean canBeWordGrab = false;
+	//public boolean canBeWordGrab = false;
 	
 	Group(int v, int i){
 		super(v, i);
