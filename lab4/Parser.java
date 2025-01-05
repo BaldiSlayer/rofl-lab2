@@ -138,9 +138,29 @@ class ParserException extends GrammarException{
 }
 
 class Regex{
+	Group g;
+	
+	Regex(){
+		
+	}
+	
+	@Override
+	public String toString(){
+		return g.toString();
+	}
+	
+	
 	class Reg{
 		int value; //'a' - 'z' - alphabetic, 1-9 - reg grab, -9 - -1 - wordgrab
 		boolean star = false;
+		
+		Reg(int v){
+			
+		}
+		
+		Reg(char c){
+			
+		}
 		
 		public void setStar(){star = true;}
 	}
