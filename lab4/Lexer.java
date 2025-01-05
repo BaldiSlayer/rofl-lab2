@@ -174,7 +174,13 @@ class Lexer{
 		public LexemType type;
 		public Integer value = null; // специальная константа для упрощения дальнейшего парсинга
 		
-		Lexem(int s, int e, LexemType t){start=s;end=e;type=t;}
+		Lexem(int s, int e, LexemType t){
+			start=s;end=e;type=t;
+			
+			if(type == Lexer.LexemType.letter){
+				value = (int)inputString.charAt(s);
+			}
+		}
 		public String toString(){return String.format("%d:%d %s", start, end, type);}
 	}
 }
