@@ -95,7 +95,7 @@ class FrameGrammar{
 	
 	public static void main(String[] args){
 		LinkedList<String> tests = new LinkedList<String>();
-		
+		/*
 		tests.add("\\1(a|b)");				// no
 		tests.add("(?1)(a*|b)");				// ok
 		tests.add("(a(?1)b | c)");			// ok
@@ -107,7 +107,8 @@ class FrameGrammar{
 		tests.add("(a |(?:(b))) \\2"); 		// no
 		tests.add("(a) \\1 | b");			// ok
 		tests.add("(a)\\3");				// no
-		tests.add("(aa");					// no
+		tests.add("(aa");					// no*/
+		tests.add("(aaba | c)* \\1| d(?1)");
 		
 		Parser p = new Parser();
 		

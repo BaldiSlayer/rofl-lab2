@@ -1,14 +1,25 @@
 import java.util.LinkedList;
+import java.util.Scanner;
 
 class Main{
 	public static void main(String[] args){
-		LinkedList<Integer> l = new LinkedList<Integer>();
+		Scanner scan = new Scanner(System.in);
+		Parser p = new Parser();
 		
-		l.add(1);
-		l.add(2);
-		l.add(3);
-		
-		System.out.println(l.size());
+		while(true){
+			System.out.print("enter regex: ");
+			String test = scan.nextLine();
+			
+			try{
+				Regex r = p.parse(test);
+				System.out.println(r);
+				FrameGrammar fg = new FrameGrammar(r);
+			}catch(GrammarException e){
+				System.out.println(e);
+			}
+			
+			System.out.println("---------------------");
+		}
 	}
 }
 
