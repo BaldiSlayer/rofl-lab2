@@ -1,7 +1,7 @@
 import java.util.LinkedList;
 
 class Checker{
-	LinkedList<Group> groups;
+	public LinkedList<Group> groups;
 	
 	
 	void check(Regex r) throws GrammarException{
